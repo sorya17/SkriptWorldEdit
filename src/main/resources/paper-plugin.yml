@@ -1,0 +1,14 @@
+main: me.tecspace.skriptworldedit.SkriptWorldEdit
+name: SkriptWorldEdit
+version: '${version}'
+description: "A Skript addon that lets you interact with WorldEdit."
+author: tecspace
+api-version: '${apiversion}'
+dependencies:
+  server:
+    Skript:
+      load: BEFORE
+      required: true
+    WorldEdit:
+      load: BEFORE
+      required: true

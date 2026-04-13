@@ -1,0 +1,8 @@
+version: ${version}
+
+types:
+    worldeditclipboard: worldedit clipboard¦s
+    worldeditpattern: worldedit pattern¦s
+    worldeditmask: worldedit mask¦s
+    worldeditregion: worldedit region¦s
+    clipboardformats: worldedit clipboard format¦s
