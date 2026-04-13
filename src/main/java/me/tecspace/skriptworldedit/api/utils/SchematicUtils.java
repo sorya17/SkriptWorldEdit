@@ -10,9 +10,11 @@ import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormats;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardWriter;
+import com.sk89q.worldedit.function.mask.Mask;
 import com.sk89q.worldedit.function.operation.ForwardExtentCopy;
 import com.sk89q.worldedit.function.operation.Operation;
 import com.sk89q.worldedit.function.operation.Operations;
+import com.sk89q.worldedit.math.transform.Transform;
 import com.sk89q.worldedit.session.ClipboardHolder;
 import com.sk89q.worldedit.world.World;
 import me.tecspace.skriptworldedit.api.RegionWrapper;
@@ -52,21 +54,24 @@ public class SchematicUtils {
     /**
      * Creates a schematic from a region
      */
-    public static void create(RegionWrapper region, Path savePath, ClipboardFormat format, boolean copyEntities, boolean copyBiomes) {
+    public static void create(RegionWrapper region, Path savePath, ClipboardFormat format, boolean copyEntities, boolean copyBiomes, @Nullable Mask sourceMask, @Nullable Transform transform) {
         Utils.run(true, () -> {
-            BlockArrayClipboard clipboard = new BlockArrayClipboard(region.region());
-            ForwardExtentCopy copy = new ForwardExtentCopy(BukkitAdapter.adapt(region.world()), region.region(), clipboard, region.region().getMinimumPoint());
-            // configuration
-            copy.setCopyingEntities(copyEntities);
-            copy.setCopyingBiomes(copyBiomes);
-            //
-            try {
-                Operations.complete(copy);
-                try (ClipboardWriter writer = format.getWriter(new FileOutputStream(savePath.toFile()))) {
-                    writer.write(clipboard);
+            try (BlockArrayClipboard clipboard = new BlockArrayClipboard(region.region())) {
+                ForwardExtentCopy copy = new ForwardExtentCopy(BukkitAdapter.adapt(region.world()), region.region(), clipboard, region.region().getMinimumPoint());
+                // configuration
+                copy.setCopyingEntities(copyEntities);
+                copy.setCopyingBiomes(copyBiomes);
+                if (sourceMask != null) copy.setSourceMask(sourceMask);
+                if (transform != null) copy.setTransform(transform);
+                //
+                try {
+                    Operations.complete(copy);
+                    try (ClipboardWriter writer = format.getWriter(new FileOutputStream(savePath.toFile()))) {
+                        writer.write(clipboard);
+                    }
+                } catch (IOException | WorldEditException e) {
+                    Utils.log("Exception while trying to save clipboard: " + e.getMessage());
                 }
-            } catch (IOException | WorldEditException e) {
-                Utils.log("Exception while trying to save clipboard: " + e);
             }
         });
     }

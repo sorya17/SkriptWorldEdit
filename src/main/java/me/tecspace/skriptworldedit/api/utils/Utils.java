@@ -10,9 +10,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import io.papermc.paper.registry.tag.Tag;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
@@ -62,6 +65,15 @@ public class Utils {
             if (arg.equals(Material.class)) return true;
         }
         return false;
+    }
+
+    public static @Nullable String getFileExtension(Path path) {
+        return getFileExtension(path.getFileName().toString());
+    }
+
+    public static @Nullable String getFileExtension(String string) {
+        int dot = string.lastIndexOf('.');
+        return dot > 0 ? string.substring(dot + 1) : null;
     }
 
     /**
