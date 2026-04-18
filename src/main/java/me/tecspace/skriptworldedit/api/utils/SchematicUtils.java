@@ -79,7 +79,7 @@ public class SchematicUtils {
     /**
      * Loads a schematic from a file and pastes it at a location
      */
-    public static void paste(Path path, Location location, boolean ignoreAir, boolean pasteEntities, boolean pasteBiomes) {
+    public static void paste(Path path, Location location, boolean ignoreAir, boolean pasteEntities, boolean pasteBiomes, @Nullable Mask sourceMask) {
         File file = path.toFile();
         if (!file.exists()) {
             Utils.log("File does not exist: " + path);
@@ -111,6 +111,7 @@ public class SchematicUtils {
                         .ignoreAirBlocks(ignoreAir)
                         .copyEntities(pasteEntities)
                         .copyBiomes(pasteBiomes)
+                        .maskSource(sourceMask)
                         .build();
                 Operations.complete(operation);
             } catch (WorldEditException e) {

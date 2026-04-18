@@ -31,7 +31,7 @@ public record MaskWrapper(Mask mask) {
      */
     public static @Nullable MaskWrapper from(Object[] sources) {
 
-        if (sources.length == 0) return null;
+        if (sources == null || sources.length == 0) return null;
 
         if (sources.length == 1) {
             if (sources[0] instanceof MaskWrapper wrapper) return wrapper;

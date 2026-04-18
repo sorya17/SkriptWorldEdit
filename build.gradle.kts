@@ -52,11 +52,8 @@ tasks {
 
 val targetJavaVersion = 21
 java {
-    val javaVersion = JavaVersion.toVersion(targetJavaVersion)
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaVersion
-    if (JavaVersion.current() < javaVersion) {
-        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(targetJavaVersion))
     }
 }
 

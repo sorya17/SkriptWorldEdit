@@ -1,4 +1,4 @@
-package me.tecspace.skriptworldedit.elements.Schematic;
+package me.tecspace.skriptworldedit.elements.Schematic.effects;
 
 import ch.njol.skript.doc.*;
 import ch.njol.skript.lang.Effect;
