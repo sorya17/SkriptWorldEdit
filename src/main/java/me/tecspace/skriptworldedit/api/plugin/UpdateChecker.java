@@ -48,10 +48,11 @@ public class UpdateChecker {
         Version pluginVersion = new Version(plugin.getPluginMeta().getVersion());
         if (latest == null) {
             Utils.log("Failed to check for updates.");
-        }
-        if (latest != null && pluginVersion.isSmallerThan(latest)) {
+        } else if (pluginVersion.isSmallerThan(latest)) {
             Utils.log(
                     "A new update for SkriptWorldEdit is available (" + pluginVersion + ") You are running (" + latest + "). Download it at https://github.com/" + GITHUB_SOURCE + "/releases");
+        } else {
+            Utils.log("You are running the latest version!");
         }
     }
 }

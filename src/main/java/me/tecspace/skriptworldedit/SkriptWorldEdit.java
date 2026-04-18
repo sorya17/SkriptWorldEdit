@@ -68,6 +68,9 @@ public class SkriptWorldEdit extends JavaPlugin implements AddonModule {
         addon.localizer().setSourceDirectories("lang", null);
         addon.loadModules(this);
 
+        // Preload fawe relighter factory
+        preLoadRelighterFactory();
+
         // Check for plugin updates from GitHub
         new UpdateChecker(this, "tecspace", "SkriptWorldEdit").checkForUpdates();
 
@@ -112,7 +115,7 @@ public class SkriptWorldEdit extends JavaPlugin implements AddonModule {
             .loadClasses(SkriptWorldEdit.class, getFile());
     }
 
-    private void preLoadRelighterFactory() {
+    private static void preLoadRelighterFactory() {
         if (!UsesFastAsyncWorldEdit) return;
         Platform platform = WorldEdit.getInstance().getPlatformManager().queryCapability(Capability.WORLD_EDITING);
         if (platform == null) return;
