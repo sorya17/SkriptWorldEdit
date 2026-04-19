@@ -52,7 +52,7 @@ public class EffPasteSchematic extends Effect {
         File file = (isPath) ? SchematicUtils.getSchematicFile(Paths.get(source)) : SchematicUtils.getSchematicFile(source);
         if (file == null) return;
         for (Location location : locationExpr.getAll(event)) {
-            SchematicUtils.paste(file.toPath(), location, true, true, true, null);
+            SchematicUtils.paste(file.toPath(), location, true, true, true, null, null);
         }
     }
 

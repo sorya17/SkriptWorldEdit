@@ -23,8 +23,6 @@ public record MaskWrapper(Mask mask) {
     public static final String MASK_SOURCE_TYPES = "%string/itemtypes/blockdatas/minecrafttags/biomes/worldeditregion/worldeditmask%";
     public static final String MASK_SOURCE_TYPES_OPTIONAL = "%-string/itemtypes/blockdatas/minecrafttags/biomes/worldeditregion/worldeditmask%";
 
-    public static final String USING_OPTIONAL_MASK = "[(using|with|respecting) [mask] " + MASK_SOURCE_TYPES_OPTIONAL + "]";
-
     /**
      * Attempts to create a mask from various types,
      * which can be a string, region, mask, biomes, item types, or block data.

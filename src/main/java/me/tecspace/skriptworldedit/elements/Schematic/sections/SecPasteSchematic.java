@@ -9,10 +9,12 @@ import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.util.Kleenean;
 import com.sk89q.worldedit.function.mask.Mask;
+import com.sk89q.worldedit.math.transform.Transform;
 import me.tecspace.skriptworldedit.api.MaskWrapper;
 import me.tecspace.skriptworldedit.api.utils.SchematicUtils;
 import org.bukkit.Location;
 import org.bukkit.event.Event;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.lang.entry.EntryContainer;
 import org.skriptlang.skript.lang.entry.EntryValidator;
@@ -33,6 +35,9 @@ import java.util.List;
         - paste biomes: (optional) whether biomes from the schematic should be included. false by default.
         - ignore air: (optional) whether air blocks should be ignored. false by default.
         - mask: (optional) a mask of blocks to ignore from the schematic. none by default.
+        - rotation: (optional) the rotation across the y-axis at which the schematic is placed. 0 by default.
+        - scale: (optional) vector that lets you define how the schematic should be scaled. none by default.
+        - translation: (optional) vector letting you offset the schematic placement. none by default.
         """)
 @Examples("""
         paste schematic named "example" at {_loc}:
@@ -40,6 +45,9 @@ import java.util.List;
             paste biomes: false
             ignore air: true
             mask: {_mask}
+            rotation: 90
+            scale: vector(2,2,2)
+            translation: vector(0,5,0)
         """)
 @Since("1.0")
 @RequiredPlugins("WorldEdit")
@@ -61,6 +69,10 @@ public class SecPasteSchematic extends Section {
         builder.addEntryData(new ExpressionEntryData<>("paste biomes", new SimpleLiteral<>(false, false), true, Boolean.class));
         builder.addEntryData(new ExpressionEntryData<>("ignore air", new SimpleLiteral<>(false, false), true, Boolean.class));
         builder.addEntryData(new ExpressionEntryData<>("mask", null, true, Object.class));
+        // transformation related entries
+        builder.addEntryData(new ExpressionEntryData<>("rotation", null, true, Double.class));
+        builder.addEntryData(new ExpressionEntryData<>("scale", null, true, Vector.class));
+        builder.addEntryData(new ExpressionEntryData<>("translation", null, true, Vector.class));
         return builder.build();
     }
 
@@ -72,6 +84,10 @@ public class SecPasteSchematic extends Section {
     private Expression<Boolean> pasteEntities;
     private Expression<Boolean> pasteBiomes;
     private Expression<Boolean> ignoreAir;
+    // transformation related entries
+    private Expression<Double> rotationExpr;
+    private Expression<Vector> scaleExpr;
+    private Expression<Vector> translationExpr;
 
     @Override
     @SuppressWarnings("unchecked")
@@ -88,6 +104,10 @@ public class SecPasteSchematic extends Section {
         this.pasteBiomes = (Expression<Boolean>) container.get("paste biomes", true);
         this.ignoreAir = (Expression<Boolean>) container.get("ignore air", true);
         this.maskExpr = (Expression<?>) container.getOptional("mask", true);
+        // transformation related entries
+        this.rotationExpr = (Expression<Double>) container.getOptional("rotation", true);
+        this.scaleExpr = (Expression<Vector>) container.getOptional("scale", true);
+        this.translationExpr = (Expression<Vector>) container.getOptional("translation", true);
 
         return true;
     }
@@ -100,10 +120,14 @@ public class SecPasteSchematic extends Section {
 
     private void execute(Event event) {
         String source = sourceExpr.getSingle(event);
-        if (source == null) return;
+        if (source == null) {
+            error("Schematic name or path is missing");
+            return;
+        }
 
         Path filePath = (isPath) ? Paths.get(source) : SchematicUtils.getSchematicsFolderPath().resolve(source + ".schem");
 
+        // entries
         MaskWrapper sourceMaskW = MaskWrapper.from(maskExpr == null ? null : maskExpr.getArray(event));
         Mask sourceMask = (sourceMaskW == null) ? null : sourceMaskW.mask();
 
@@ -111,8 +135,15 @@ public class SecPasteSchematic extends Section {
         boolean pasteEntities = Boolean.TRUE.equals(this.pasteEntities.getSingle(event));
         boolean pasteBiomes = Boolean.TRUE.equals(this.pasteBiomes.getSingle(event));
 
+        // transformation related entries
+        Double rotation = (rotationExpr == null) ? null : rotationExpr.getSingle(event);
+        Vector scale = (scaleExpr == null) ? null : scaleExpr.getSingle(event);
+        Vector translation = (translationExpr == null) ? null : translationExpr.getSingle(event);
+
+        Transform transform = SchematicUtils.createTransform(rotation, scale, translation);
+
         for (Location location : locationExpr.getAll(event)) {
-            SchematicUtils.paste(filePath, location, ignoreAir, pasteEntities, pasteBiomes, sourceMask);
+            SchematicUtils.paste(filePath, location, ignoreAir, pasteEntities, pasteBiomes, sourceMask, transform);
         }
     }
 

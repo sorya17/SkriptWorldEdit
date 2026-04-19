@@ -14,17 +14,41 @@ import com.sk89q.worldedit.function.mask.Mask;
 import com.sk89q.worldedit.function.operation.ForwardExtentCopy;
 import com.sk89q.worldedit.function.operation.Operation;
 import com.sk89q.worldedit.function.operation.Operations;
+import com.sk89q.worldedit.math.transform.AffineTransform;
 import com.sk89q.worldedit.math.transform.Transform;
 import com.sk89q.worldedit.session.ClipboardHolder;
 import com.sk89q.worldedit.world.World;
 import me.tecspace.skriptworldedit.api.RegionWrapper;
 import org.bukkit.Location;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.Path;
 
 public class SchematicUtils {
+
+    public static @Nullable Transform createTransform(
+            @Nullable Double rotation,
+            @Nullable Vector scale,
+            @Nullable Vector translation) {
+
+        AffineTransform transform = new AffineTransform();
+
+        if (rotation != null)
+            transform = transform.rotateY(rotation);
+
+        if (scale != null)
+            transform = transform.scale(scale.getX(), scale.getY(), scale.getZ());
+
+        if (translation != null)
+            transform = transform.translate(translation.getX(), translation.getY(), translation.getZ());
+
+        if (rotation == null && scale == null && translation == null)
+            return null;
+
+        return transform;
+    }
 
     /**
      * Gets a schematic file from its full path
@@ -79,7 +103,7 @@ public class SchematicUtils {
     /**
      * Loads a schematic from a file and pastes it at a location
      */
-    public static void paste(Path path, Location location, boolean ignoreAir, boolean pasteEntities, boolean pasteBiomes, @Nullable Mask sourceMask) {
+    public static void paste(Path path, Location location, boolean ignoreAir, boolean pasteEntities, boolean pasteBiomes, @Nullable Mask sourceMask, @Nullable Transform transform) {
         File file = path.toFile();
         if (!file.exists()) {
             Utils.log("File does not exist: " + path);
@@ -105,6 +129,7 @@ public class SchematicUtils {
                     ClipboardHolder holder = new ClipboardHolder(clipboard);
                     Clipboard c = clipboard
             ) {
+                if (transform != null) holder.setTransform(transform);
                 Operation operation = holder
                         .createPaste(editSession)
                         .to(Utils.toBlockVector3(location))
