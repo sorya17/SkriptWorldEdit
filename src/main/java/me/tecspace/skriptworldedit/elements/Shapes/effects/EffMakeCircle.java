@@ -1,4 +1,4 @@
-package me.tecspace.skriptworldedit.elements.Shapes;
+package me.tecspace.skriptworldedit.elements.Shapes.effects;
 
 import ch.njol.skript.doc.*;
 import ch.njol.skript.lang.Effect;

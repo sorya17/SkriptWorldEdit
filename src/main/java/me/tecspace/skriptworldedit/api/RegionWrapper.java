@@ -175,8 +175,8 @@ public record RegionWrapper(Region region, World world) {
     /**
      * Saves the region (as a schematic for example, depending on given format).
      */
-    public void save(Path savePath, ClipboardFormat format, boolean copyEntities, boolean copyBiomes, @Nullable Mask sourceMask, @Nullable Transform transform) {
-        SchematicUtils.create(this, savePath, format, copyEntities, copyBiomes, sourceMask, transform);
+    public void save(Path savePath, ClipboardFormat format, boolean copyEntities, boolean copyBiomes, @Nullable Location origin, @Nullable Mask sourceMask, @Nullable Transform transform) {
+        SchematicUtils.create(this, savePath, format, copyEntities, copyBiomes, origin, sourceMask, transform);
     }
 
     /**

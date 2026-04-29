@@ -1,4 +1,4 @@
-package me.tecspace.skriptworldedit.elements.Shapes;
+package me.tecspace.skriptworldedit.elements.Shapes.effects;
 
 import ch.njol.skript.doc.*;
 import ch.njol.skript.lang.Effect;
@@ -9,33 +9,31 @@ import me.tecspace.skriptworldedit.api.PatternWrapper;
 import me.tecspace.skriptworldedit.api.Shapes;
 import org.bukkit.Location;
 import org.bukkit.event.Event;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.registration.SyntaxInfo;
 import org.skriptlang.skript.registration.SyntaxRegistry;
 
-@Name("Shape - Make Sphere")
-@Description("Makes a sphere.")
+@Name("Shape - Make Pyramid")
+@Description("Makes a pyramid.")
 @Examples("""
-        make sphere of stone with radius 5 at {_location}
-        make sphere using {_pattern} with radius 5 at {_location}
-        make hollow sphere of dirt with size vector(5,10,5) at {_location}
+        make pyramid of sandstone with size 21 at {_location}
+        make hollow pyramid using {_pattern} with size 17 at {_location}
         """)
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
-public class EffMakeSphere extends Effect {
+public class EffMakePyramid extends Effect {
 
     public static void register(SyntaxRegistry registry) {
-        registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffMakeSphere.class)
-                .supplier(EffMakeSphere::new)
-                .addPattern("[:lazily] make [a] [:hollow] sphere (of|with|using) [pattern] " + PatternWrapper.PARSABLE_TYPES_STRING + " with [a] (radius|size) [of] %number/vector% at %locations%")
+        registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffMakePyramid.class)
+                .supplier(EffMakePyramid::new)
+                .addPattern("[:async] make [a] [:hollow] pyramid (of|with|using) [pattern] " + PatternWrapper.PARSABLE_TYPES_STRING + " with [a] size [of] %integer% at %locations%")
                 .build());
     }
 
     private boolean async;
     private boolean hollow;
     private Expression<?> patternExpr;
-    private Expression<?> radiusExpr;
+    private Expression<Integer> sizeExpr;
     private Expression<Location> locationsExpr;
 
     @Override
@@ -44,7 +42,7 @@ public class EffMakeSphere extends Effect {
         this.async = parseResult.hasTag("async");
         this.hollow = parseResult.hasTag("hollow");
         this.patternExpr = expressions[0];
-        this.radiusExpr = expressions[1];
+        this.sizeExpr = (Expression<Integer>) expressions[1];
         this.locationsExpr = (Expression<Location>) expressions[2];
         return true;
     }
@@ -54,27 +52,16 @@ public class EffMakeSphere extends Effect {
         PatternWrapper pattern = PatternWrapper.from(patternExpr.getArray(event));
         if (pattern == null) return;
 
-        // get radius
-        double radiusX, radiusY, radiusZ;
-        switch (radiusExpr.getSingle(event)) {
-            case Number number -> radiusX = radiusY = radiusZ = number.doubleValue();
-            case Vector vector -> {
-                radiusX = vector.getX();
-                radiusY = vector.getY();
-                radiusZ = vector.getZ();
-            }
-            case null, default -> {
-                return;
-            }
-        }
+        Integer size = sizeExpr.getSingle(event);
+        if (size == null) return;
 
         for (Location location : locationsExpr.getArray(event)) {
-            Shapes.makeSphere(location, pattern.pattern(), radiusX, radiusY, radiusZ, !hollow, async);
+            Shapes.makePyramid(location, pattern.pattern(), size, !hollow, async);
         }
     }
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "async " : "") + "make " + (hollow ? "hollow " : "") + "sphere using " + patternExpr.toString(event, debug);
+        return (async ? "async " : "") + "make " + (hollow ? "hollow " : "") + "pyramid using " + patternExpr.toString(event, debug);
     }
 }

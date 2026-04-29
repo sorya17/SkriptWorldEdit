@@ -115,6 +115,11 @@ public class SkriptWorldEdit extends JavaPlugin implements AddonModule {
             .loadClasses(SkriptWorldEdit.class, getFile());
     }
 
+    @Override
+    public String name() {
+        return "SkriptWorldEdit";
+    }
+
     private static void preLoadRelighterFactory() {
         if (!UsesFastAsyncWorldEdit) return;
         Platform platform = WorldEdit.getInstance().getPlatformManager().queryCapability(Capability.WORLD_EDITING);

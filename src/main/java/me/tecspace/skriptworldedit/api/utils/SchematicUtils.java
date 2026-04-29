@@ -1,5 +1,6 @@
 package me.tecspace.skriptworldedit.api.utils;
 
+import com.fastasyncworldedit.core.extent.clipboard.DiskOptimizedClipboard;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.WorldEditException;
@@ -14,41 +15,19 @@ import com.sk89q.worldedit.function.mask.Mask;
 import com.sk89q.worldedit.function.operation.ForwardExtentCopy;
 import com.sk89q.worldedit.function.operation.Operation;
 import com.sk89q.worldedit.function.operation.Operations;
-import com.sk89q.worldedit.math.transform.AffineTransform;
 import com.sk89q.worldedit.math.transform.Transform;
 import com.sk89q.worldedit.session.ClipboardHolder;
 import com.sk89q.worldedit.world.World;
 import me.tecspace.skriptworldedit.api.RegionWrapper;
+import me.tecspace.skriptworldedit.api.clipboard.ClipboardManager;
+import me.tecspace.skriptworldedit.api.clipboard.ClipboardWrapper;
 import org.bukkit.Location;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.Path;
 
 public class SchematicUtils {
-
-    public static @Nullable Transform createTransform(
-            @Nullable Double rotation,
-            @Nullable Vector scale,
-            @Nullable Vector translation) {
-
-        AffineTransform transform = new AffineTransform();
-
-        if (rotation != null)
-            transform = transform.rotateY(rotation);
-
-        if (scale != null)
-            transform = transform.scale(scale.getX(), scale.getY(), scale.getZ());
-
-        if (translation != null)
-            transform = transform.translate(translation.getX(), translation.getY(), translation.getZ());
-
-        if (rotation == null && scale == null && translation == null)
-            return null;
-
-        return transform;
-    }
 
     /**
      * Gets a schematic file from its full path
@@ -78,10 +57,16 @@ public class SchematicUtils {
     /**
      * Creates a schematic from a region
      */
-    public static void create(RegionWrapper region, Path savePath, ClipboardFormat format, boolean copyEntities, boolean copyBiomes, @Nullable Mask sourceMask, @Nullable Transform transform) {
+    public static void create(RegionWrapper region, Path savePath, ClipboardFormat format, boolean copyEntities, boolean copyBiomes, @Nullable Location origin, @Nullable Mask sourceMask, @Nullable Transform transform) {
         Utils.run(true, () -> {
             try (BlockArrayClipboard clipboard = new BlockArrayClipboard(region.region())) {
-                ForwardExtentCopy copy = new ForwardExtentCopy(BukkitAdapter.adapt(region.world()), region.region(), clipboard, region.region().getMinimumPoint());
+                ForwardExtentCopy copy = new ForwardExtentCopy(
+                        BukkitAdapter.adapt(region.world()),
+                        region.region(),
+                        (origin != null) ? Utils.toBlockVector3(origin) : region.region().getMinimumPoint(),
+                        clipboard,
+                        region.region().getMinimumPoint()
+                );
                 // configuration
                 copy.setCopyingEntities(copyEntities);
                 copy.setCopyingBiomes(copyBiomes);
@@ -115,19 +100,12 @@ public class SchematicUtils {
             return;
         }
 
-        Clipboard clipboard;
-        try (ClipboardReader reader = format.getReader(new FileInputStream(file))) {
-            clipboard = reader.read();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
         World world = BukkitAdapter.adapt(location.getWorld());
         Utils.run(true, () -> {
             try (
                     EditSession editSession = WorldEdit.getInstance().newEditSession(world);
-                    ClipboardHolder holder = new ClipboardHolder(clipboard);
-                    Clipboard c = clipboard
+                    ClipboardWrapper clipboard = ClipboardManager.getClipboard(path, false);
+                    ClipboardHolder holder = new ClipboardHolder(clipboard.clipboard());
             ) {
                 if (transform != null) holder.setTransform(transform);
                 Operation operation = holder
@@ -139,7 +117,8 @@ public class SchematicUtils {
                         .maskSource(sourceMask)
                         .build();
                 Operations.complete(operation);
-            } catch (WorldEditException e) {
+
+            } catch (WorldEditException | IOException e) {
                 Utils.log("Exception while trying to paste clipboard: " + e.getMessage());
             }
         });

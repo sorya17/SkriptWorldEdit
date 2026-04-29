@@ -1,9 +1,9 @@
 package me.tecspace.skriptworldedit.elements.Schematic.effects;
 
 import ch.njol.skript.doc.*;
-import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.util.AsyncEffect;
 import ch.njol.util.Kleenean;
 import me.tecspace.skriptworldedit.api.utils.SchematicUtils;
 import me.tecspace.skriptworldedit.api.utils.Utils;
@@ -23,7 +23,7 @@ import java.nio.file.Paths;
         """)
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
-public class EffDeleteSchematic extends Effect {
+public class EffDeleteSchematic extends AsyncEffect {
 
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffDeleteSchematic.class)
