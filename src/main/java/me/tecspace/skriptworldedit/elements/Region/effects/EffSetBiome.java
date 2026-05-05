@@ -26,7 +26,7 @@ public class EffSetBiome extends Effect {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffSetBiome.class)
                 .supplier(EffSetBiome::new)
-                .addPattern("[:async] set [the] region biome of %worldeditregions% to %biome%")
+                .addPattern("[:lazily] set [the] region biome of %worldeditregions% to %biome%")
                 .build());
     }
 
@@ -39,7 +39,7 @@ public class EffSetBiome extends Effect {
     public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
         regionExpr = (Expression<RegionWrapper>) exprs[0];
         biomeExpr = (Expression<Biome>) exprs[1];
-        async = parseResult.hasTag("async");
+        async = !parseResult.hasTag("lazily");
         if (async && !SkriptWorldEdit.UsesFastAsyncWorldEdit) {
             Skript.warning("Async is only supported with FastAsyncWorldEdit. The operation will run synchronously.");
             async = false;
@@ -59,6 +59,6 @@ public class EffSetBiome extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "async " : "") + "set the region biome of " + regionExpr.toString(event, debug) + " to " + biomeExpr.toString(event, debug);
+        return (async ? "" : "lazily ") + "set the region biome of " + regionExpr.toString(event, debug) + " to " + biomeExpr.toString(event, debug);
     }
 }

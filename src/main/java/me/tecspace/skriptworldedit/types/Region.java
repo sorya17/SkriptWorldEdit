@@ -45,7 +45,7 @@ public class Region {
 
                     @Override
                     public String toString(RegionWrapper region, int flags) {
-                        return region.describe();
+                        return region.toString();
                     }
 
                     @Override

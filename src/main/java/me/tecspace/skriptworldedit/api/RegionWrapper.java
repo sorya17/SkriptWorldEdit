@@ -18,7 +18,7 @@ import com.sk89q.worldedit.math.convolution.GaussianKernel;
 import com.sk89q.worldedit.math.convolution.HeightMapFilter;
 import com.sk89q.worldedit.math.convolution.SnowHeightMap;
 import com.sk89q.worldedit.math.transform.Transform;
-import com.sk89q.worldedit.regions.Region;
+import com.sk89q.worldedit.regions.*;
 import com.sk89q.worldedit.world.RegenOptions;
 import com.sk89q.worldedit.world.biome.BiomeType;
 import com.sk89q.worldedit.world.block.BlockTypes;
@@ -27,6 +27,7 @@ import me.tecspace.skriptworldedit.api.utils.Utils;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
@@ -34,26 +35,40 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-
+/**
+ * Pairs a {@link Region} with a {@link World}, which is used in all future operations.
+ */
 public record RegionWrapper(Region region, World world) {
 
-    public String getRegionType() {
-        return region.getClass().getSimpleName().replace("Region", "");
-    }
-
-    /**
-     * Describes the region in natural language (for skript)
-     */
-    public String describe() {
-        // To-do: maybe add more descriptive strings for different types of regions
-        // Cuboid Region between (10, 64, 10) to (20, 70, 20) in world "world" (160 blocks)
-        return String.format("%s Region between %s and %s in world \"%s\" with scale %s",
-                region.getClass().getSimpleName().replace("Region", ""),
-                region.getMinimumPoint().toString(),
-                region.getMaximumPoint().toString(),
-                world.getName(),
-                region.getDimensions().toString()
-        );
+    public @NotNull String toString() {
+        return switch (region) {
+            case CylinderRegion cuboid ->
+                    String.format("Cylindrical Region at %s in world \"%s\" with size %s",
+                        cuboid.getCenter(),
+                        world.getName(),
+                        cuboid.getDimensions()
+            );
+            case EllipsoidRegion ellipsoid ->
+                    String.format("Ellipsoid Region at %s in world \"%s\" with size %s",
+                        ellipsoid.getCenter(),
+                        world.getName(),
+                        ellipsoid.getDimensions()
+            );
+            case ConvexPolyhedralRegion convex ->
+                    String.format("Convex Polyhedral Region at %s in world \"%s\" with size %s and %s vertices",
+                            convex.getCenter(),
+                            world.getName(),
+                            convex.getDimensions(),
+                            convex.getVertices().size()
+                    );
+            default ->
+                    String.format("Cuboid Region between %s and %s in world \"%s\" with size %s",
+                        region.getMinimumPoint(),
+                        region.getMaximumPoint(),
+                        world.getName(),
+                        region.getDimensions()
+            );
+        };
     }
 
     /**
@@ -153,16 +168,14 @@ public record RegionWrapper(Region region, World world) {
      * Copies the contents of the region to a location.
      */
     public void copy(Location to, @Nullable Location center, boolean copyBiomes, boolean copyEntities, @Nullable Mask mask, @Nullable Transform transform, boolean async) {
-        BlockVector3 fromSource = (center != null) ? Utils.toBlockVector3(center) : region.getMinimumPoint();
-        if (!to.isWorldLoaded()) return;
+        BlockVector3 sourcePos = (center != null) ? Utils.toBlockVector3(center) : region.getMinimumPoint();
+
         Utils.run(async, () -> {
-            try (EditSession destinationSession = WorldEdit.getInstance().newEditSession(BukkitAdapter.adapt(to.getWorld()))) {
-                ForwardExtentCopy copy = new ForwardExtentCopy(
-                        BukkitAdapter.adapt(world),
-                        region,
-                        fromSource,
-                        destinationSession,
-                        Utils.toBlockVector3(to));
+            boolean sameWorld = world.equals(to.getWorld());
+            try (EditSession sourceSession = WorldEdit.getInstance().newEditSession(BukkitAdapter.adapt(world));
+                 EditSession destSession = sameWorld ? sourceSession : WorldEdit.getInstance().newEditSession(BukkitAdapter.adapt(to.getWorld()))) {
+
+                ForwardExtentCopy copy = new ForwardExtentCopy(sourceSession, region, sourcePos, destSession, Utils.toBlockVector3(to));
                 copy.setCopyingBiomes(copyBiomes);
                 copy.setCopyingEntities(copyEntities);
                 if (transform != null) copy.setTransform(transform);

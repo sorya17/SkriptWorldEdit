@@ -29,7 +29,7 @@ public class EffSetFaces extends Effect {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffSetFaces.class)
                 .supplier(EffSetFaces::new)
-                .addPattern("[:async] set [the] faces of [region] %worldeditregions% to " + PatternWrapper.PARSABLE_TYPES_STRING + " [with %-worldeditmask%]")
+                .addPattern("[:lazily] set [the] faces of [region] %worldeditregions% to " + PatternWrapper.PARSABLE_TYPES_STRING + " [with %-worldeditmask%]")
                 .build());
     }
 
@@ -44,7 +44,7 @@ public class EffSetFaces extends Effect {
         regionExpr = (Expression<RegionWrapper>) exprs[0];
         patternExpr = exprs[1];
         maskExpr =  (Expression<MaskWrapper>) exprs[2];
-        async = parseResult.hasTag("async");
+        async = !parseResult.hasTag("lazily");
         if (async && !SkriptWorldEdit.UsesFastAsyncWorldEdit) {
             Skript.warning("Async is only supported with FastAsyncWorldEdit. The operation will run synchronously.");
             async = false;
@@ -64,6 +64,6 @@ public class EffSetFaces extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "async " : "") + "set faces of region " + regionExpr.toString(event, debug) + " to " + patternExpr.toString(event, debug);
+        return (async ? "" : "lazily ") + "set faces of region " + regionExpr.toString(event, debug) + " to " + patternExpr.toString(event, debug);
     }
 }

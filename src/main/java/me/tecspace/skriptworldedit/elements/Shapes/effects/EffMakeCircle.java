@@ -32,7 +32,7 @@ public class EffMakeCircle extends Effect {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffMakeCircle.class)
                 .supplier(EffMakeCircle::new)
-                .addPattern("[:async] make [a] [:hollow] circle (of|with|using) [pattern] " + PatternWrapper.PARSABLE_TYPES_STRING + " with [a] (size|radi(i|us)) [of] %number/vector%"
+                .addPattern("[:lazily] make [a] [:hollow] circle (of|with|using) [pattern] " + PatternWrapper.PARSABLE_TYPES_STRING + " with [a] (size|radi(i|us)) [of] %number/vector%"
                         + "[(,| and) [a] (normal|tilt|orientation) [of] %-vector%]"
                         + " at %locations%")
                 .build());
@@ -48,7 +48,7 @@ public class EffMakeCircle extends Effect {
     @Override
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-        this.async = parseResult.hasTag("async");
+        this.async = !parseResult.hasTag("lazily");
         this.hollow = parseResult.hasTag("hollow");
         this.patternExpr = expressions[0];
         this.radiusExpr = expressions[1];
@@ -87,6 +87,6 @@ public class EffMakeCircle extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "async " : "") + "make " + (hollow ? "hollow " : "") + "spline using " + patternExpr.toString(event, debug) + " at " + locationsExpr.toString(event, debug) + " with radius " + radiusExpr.toString(event, debug);
+        return (async ? "" : "lazily ") + "make " + (hollow ? "hollow " : "") + "spline using " + patternExpr.toString(event, debug) + " at " + locationsExpr.toString(event, debug) + " with radius " + radiusExpr.toString(event, debug);
     }
 }

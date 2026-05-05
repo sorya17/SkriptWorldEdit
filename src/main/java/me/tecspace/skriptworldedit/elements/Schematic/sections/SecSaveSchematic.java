@@ -131,14 +131,14 @@ public class SecSaveSchematic extends EffectSection {
         );
 
         // section common entries
-        MaskWrapper sourceMaskW = MaskWrapper.from(maskExpr == null ? null : maskExpr.getArray(event));
-        Mask sourceMask = (sourceMaskW == null) ? null : sourceMaskW.mask();
-
         boolean includeEntities = this.includeEntities == null || Boolean.TRUE.equals(this.includeEntities.getSingle(event));
         boolean includeBiomes = this.includeBiomes == null || Boolean.TRUE.equals(this.includeBiomes.getSingle(event));
         boolean overwriteExisting = this.overwriteExisting == null || Boolean.TRUE.equals(this.overwriteExisting.getSingle(event));
 
         if (overwriteExisting && savePath.toFile().exists()) return;
+
+        MaskWrapper sourceMaskW = MaskWrapper.from(maskExpr == null ? null : maskExpr.getArray(event));
+        Mask sourceMask = (sourceMaskW == null) ? null : sourceMaskW.mask();
 
         Location origin = (originExpr == null) ? null : originExpr.getSingle(event);
 

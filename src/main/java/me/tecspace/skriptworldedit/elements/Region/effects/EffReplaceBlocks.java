@@ -28,8 +28,9 @@ public class EffReplaceBlocks extends Effect {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffReplaceBlocks.class)
                 .supplier(EffReplaceBlocks::new)
-                .addPattern("[:async] replace " + MaskWrapper.MASK_SOURCE_TYPES + " with " + PatternWrapper.PARSABLE_TYPES_STRING + " in region %worldeditregions%")
-                .addPattern("[:async] replace " + MaskWrapper.MASK_SOURCE_TYPES + " in region %worldeditregions% with " + PatternWrapper.PARSABLE_TYPES_STRING)
+                // a lot of conflicts with Skript's replace in string
+                .addPattern("[:lazily] replace " + MaskWrapper.MASK_SOURCE_TYPES + " with " + PatternWrapper.PARSABLE_TYPES_STRING + " in region %worldeditregions%")
+                .addPattern("[:lazily] replace " + MaskWrapper.MASK_SOURCE_TYPES + " in region %worldeditregions% with " + PatternWrapper.PARSABLE_TYPES_STRING)
                 .build());
     }
 
@@ -44,7 +45,7 @@ public class EffReplaceBlocks extends Effect {
         maskExpr = exprs[0];
         patternExpr = exprs[matchedPattern + 1];
         regionExpr = (Expression<RegionWrapper>) exprs[matchedPattern == 0 ? 2 : 1];
-        async = parseResult.hasTag("async");
+        async = !parseResult.hasTag("lazily");
         if (async && !SkriptWorldEdit.UsesFastAsyncWorldEdit) {
             Skript.warning("Async is only supported with FastAsyncWorldEdit. The operation will run synchronously.");
             async = false;
@@ -67,6 +68,6 @@ public class EffReplaceBlocks extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "async " : "") + "replace " + maskExpr.toString(event, debug) + " with " + patternExpr.toString(event, debug) + " in " + regionExpr.toString(event, debug);
+        return (async ? "" : "lazily ") + "replace " + maskExpr.toString(event, debug) + " with " + patternExpr.toString(event, debug) + " in " + regionExpr.toString(event, debug);
     }
 }

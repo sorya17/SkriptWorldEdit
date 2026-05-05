@@ -30,7 +30,7 @@ public class EffDrawLine extends Effect {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffDrawLine.class)
                 .supplier(EffDrawLine::new)
-                .addPattern("[:async] draw [a] [:hollow] line (of|with|using) [pattern] " + PatternWrapper.PARSABLE_TYPES_STRING + " [with [a] thickness [of] %-number%] between %locations%")
+                .addPattern("[:lazily] draw [a] [:hollow] line (of|with|using) [pattern] " + PatternWrapper.PARSABLE_TYPES_STRING + " [with [a] thickness [of] %-number%] between %locations%")
                 .build());
     }
 
@@ -43,7 +43,7 @@ public class EffDrawLine extends Effect {
     @Override
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-        this.async = parseResult.hasTag("async");
+        this.async = !parseResult.hasTag("lazily");
         this.filled = !parseResult.hasTag("hollow");
         this.patternExpr = expressions[0];
         this.radiusExpr = (Expression<Number>) expressions[1];
@@ -62,6 +62,6 @@ public class EffDrawLine extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "async " : "") + "draw a " + (filled ? "hollow " : "") + "line of " + patternExpr.toString(event, debug) + " between " + locationsExpr.toString(event, debug);
+        return (async ? "" : "lazily ") + "draw a " + (filled ? "hollow " : "") + "line of " + patternExpr.toString(event, debug) + " between " + locationsExpr.toString(event, debug);
     }
 }

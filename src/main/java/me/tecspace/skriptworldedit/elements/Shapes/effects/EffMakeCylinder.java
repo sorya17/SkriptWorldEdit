@@ -67,6 +67,6 @@ public class EffMakeCylinder extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "async " : "") + "make " + (hollow ? "hollow " : "") + "cylinder using " + patternExpr.toString(event, debug);
+        return (async ? "" : "lazily ") + "make " + (hollow ? "hollow " : "") + "cylinder using " + patternExpr.toString(event, debug);
     }
 }

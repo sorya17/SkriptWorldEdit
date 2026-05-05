@@ -29,7 +29,7 @@ public class EffSetBlocks extends Effect {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffSetBlocks.class)
                 .supplier(EffSetBlocks::new)
-                .addPattern("[:async] set [all] [the] blocks (of|in) [region] %worldeditregions% to " + PatternWrapper.PARSABLE_TYPES_STRING)
+                .addPattern("[:lazily] set [all] [the] blocks (of|in) [region] %worldeditregions% to " + PatternWrapper.PARSABLE_TYPES_STRING)
                 .build());
     }
 
@@ -42,7 +42,7 @@ public class EffSetBlocks extends Effect {
     public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
         regionExpr = (Expression<RegionWrapper>) exprs[0];
         patternExpr = exprs[1];
-        async = parseResult.hasTag("async");
+        async = !parseResult.hasTag("lazily");
         if (async && !SkriptWorldEdit.UsesFastAsyncWorldEdit) {
             Skript.warning("Async is only supported with FastAsyncWorldEdit. The operation will run synchronously.");
             async = false;
@@ -61,6 +61,6 @@ public class EffSetBlocks extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "async " : "") + "set blocks in region " + regionExpr.toString(event, debug) + " to " + patternExpr.toString(event, debug);
+        return (async ? "" : "lazily ") + "set blocks in region " + regionExpr.toString(event, debug) + " to " + patternExpr.toString(event, debug);
     }
 }

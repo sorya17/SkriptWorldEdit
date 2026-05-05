@@ -9,6 +9,7 @@ import com.sk89q.worldedit.function.mask.Mask;
 import com.sk89q.worldedit.math.transform.AffineTransform;
 import me.tecspace.skriptworldedit.api.MaskWrapper;
 import me.tecspace.skriptworldedit.api.utils.SchematicUtils;
+import me.tecspace.skriptworldedit.api.utils.TransformUtils;
 import org.bukkit.Location;
 import org.bukkit.event.Event;
 import org.bukkit.util.Vector;
@@ -129,27 +130,20 @@ public class SecPasteSchematic extends EffectSection {
 
         Path filePath = (isPath) ? Paths.get(source) : SchematicUtils.getSchematicsFolderPath().resolve(source + ".schem");
 
-        // effect entries
+        // section common entries
+        boolean ignoreAir = this.ignoreAir != null && Boolean.TRUE.equals(this.ignoreAir.getSingle(event));
+        boolean pasteEntities = this.pasteEntities != null && Boolean.TRUE.equals(this.pasteEntities.getSingle(event));
+        boolean pasteBiomes = this.pasteBiomes != null && Boolean.TRUE.equals(this.pasteBiomes.getSingle(event));
+
         MaskWrapper sourceMaskW = MaskWrapper.from(maskExpr == null ? null : maskExpr.getArray(event));
         Mask sourceMask = (sourceMaskW == null) ? null : sourceMaskW.mask();
-
-        // section common entries
-        boolean ignoreAir = this.ignoreAir == null || Boolean.TRUE.equals(this.ignoreAir.getSingle(event));
-        boolean pasteEntities = this.pasteEntities == null || Boolean.TRUE.equals(this.pasteEntities.getSingle(event));
-        boolean pasteBiomes = this.pasteBiomes == null || Boolean.TRUE.equals(this.pasteBiomes.getSingle(event));
 
         // section transformation related entries
         Double rotation = (rotationExpr == null) ? null : rotationExpr.getSingle(event);
         Vector scale = (scaleExpr == null) ? null : scaleExpr.getSingle(event);
         Vector offset = (offsetExpr == null) ? null : offsetExpr.getSingle(event);
 
-        AffineTransform transform = new AffineTransform();
-        if (rotation != null)
-            transform = transform.rotateY(rotation);
-        if (scale != null)
-            transform = transform.scale(scale.getX(), scale.getY(), scale.getZ());
-        if (offset != null)
-            transform = transform.translate(offset.getX(), offset.getY(), offset.getZ());
+        AffineTransform transform = TransformUtils.buildTransform(rotation, scale, offset);
 
         for (Location location : locationExpr.getAll(event)) {
             SchematicUtils.paste(

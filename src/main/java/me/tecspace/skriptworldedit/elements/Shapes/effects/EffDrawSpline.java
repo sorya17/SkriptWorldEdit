@@ -35,7 +35,7 @@ public class EffDrawSpline extends Effect {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffDrawSpline.class)
                 .supplier(EffDrawSpline::new)
-                .addPattern("[:async] draw [a] [:hollow] spline (of|with|using) [pattern] " + PatternWrapper.PARSABLE_TYPES_STRING + " with tension %number%" +
+                .addPattern("[:lazily] draw [a] [:hollow] spline (of|with|using) [pattern] " + PatternWrapper.PARSABLE_TYPES_STRING + " with tension %number%" +
                         "[(,| and) [a] bias [of] %-number%]" +
                         "[(,| and) [a] continuity [of] %-number%]" +
                         "[(,| and) [a] quality [of] %-number%]" +
@@ -57,7 +57,7 @@ public class EffDrawSpline extends Effect {
     @Override
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-        this.async = parseResult.hasTag("async");
+        this.async = !parseResult.hasTag("lazily");
         this.hollow = parseResult.hasTag("hollow");
         this.patternExpr = expressions[0];
         this.tensionExpr = (Expression<Number>) expressions[1];
@@ -95,7 +95,7 @@ public class EffDrawSpline extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "async " : "") + "draw " + (hollow ? "hollow " : "") + "spline using "
+        return (async ? "" : "lazily ") + "draw " + (hollow ? "hollow " : "") + "spline using "
                 + patternExpr.toString(event, debug)
                 + " with tension " + tensionExpr.toString(event, debug)
                 + (biasExpr != null ? ", bias " + biasExpr.toString(event, debug) : "")

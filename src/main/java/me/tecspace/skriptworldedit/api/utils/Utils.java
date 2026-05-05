@@ -3,6 +3,8 @@ package me.tecspace.skriptworldedit.api.utils;
 import ch.njol.skript.Skript;
 import ch.njol.skript.log.ErrorQuality;
 import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.math.transform.AffineTransform;
+import com.sk89q.worldedit.math.transform.Transform;
 import me.tecspace.skriptworldedit.SkriptWorldEdit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -10,6 +12,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import io.papermc.paper.registry.tag.Tag;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;

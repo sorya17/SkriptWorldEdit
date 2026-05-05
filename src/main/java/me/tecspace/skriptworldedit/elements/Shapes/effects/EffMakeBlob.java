@@ -35,7 +35,7 @@ public class EffMakeBlob extends Effect {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffMakeBlob.class)
                 .supplier(EffMakeBlob::new)
-                .addPattern("[:async] make [a] blob (of|with|using) [pattern] " + PatternWrapper.PARSABLE_TYPES_STRING + " with [a] size [of] %number%" +
+                .addPattern("[:lazily] make [a] blob (of|with|using) [pattern] " + PatternWrapper.PARSABLE_TYPES_STRING + " with [a] size [of] %number%" +
                         "[(,| and) [a] frequency [of] %-number%]" +
                         "[(,| and) [a] amplitude [of] %-number%]" +
                         "[(,| and) [a] radius [of] %-vector%]" +
@@ -56,7 +56,7 @@ public class EffMakeBlob extends Effect {
     @Override
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-        this.async = parseResult.hasTag("async");
+        this.async = !parseResult.hasTag("lazily");
         this.patternExpr = exprs[0];
         this.sizeExpr = (Expression<Number>) exprs[1];
         this.frequencyExpr = (Expression<Number>) exprs[2];
@@ -98,7 +98,7 @@ public class EffMakeBlob extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "async " : "") + "make a blob using " + patternExpr.toString(event, debug) + " with size " + sizeExpr.toString(event, debug) +
+        return (async ? "" : "lazily ") + "make a blob using " + patternExpr.toString(event, debug) + " with size " + sizeExpr.toString(event, debug) +
                 ", frequency " + frequencyExpr.toString(event, debug) +
                 ", amplitude " + amplitudeExpr.toString(event, debug) +
                 ", radius " + radiusExpr.toString(event, debug) +

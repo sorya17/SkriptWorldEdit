@@ -26,7 +26,7 @@ public class EffMakePyramid extends Effect {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffMakePyramid.class)
                 .supplier(EffMakePyramid::new)
-                .addPattern("[:async] make [a] [:hollow] pyramid (of|with|using) [pattern] " + PatternWrapper.PARSABLE_TYPES_STRING + " with [a] size [of] %integer% at %locations%")
+                .addPattern("[:lazily] make [a] [:hollow] pyramid (of|with|using) [pattern] " + PatternWrapper.PARSABLE_TYPES_STRING + " with [a] size [of] %integer% at %locations%")
                 .build());
     }
 
@@ -39,7 +39,7 @@ public class EffMakePyramid extends Effect {
     @Override
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-        this.async = parseResult.hasTag("async");
+        this.async = !parseResult.hasTag("lazily");
         this.hollow = parseResult.hasTag("hollow");
         this.patternExpr = expressions[0];
         this.sizeExpr = (Expression<Integer>) expressions[1];
@@ -62,6 +62,6 @@ public class EffMakePyramid extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "async " : "") + "make " + (hollow ? "hollow " : "") + "pyramid using " + patternExpr.toString(event, debug);
+        return (async ? "" : "lazily ") + "make " + (hollow ? "hollow " : "") + "pyramid using " + patternExpr.toString(event, debug);
     }
 }

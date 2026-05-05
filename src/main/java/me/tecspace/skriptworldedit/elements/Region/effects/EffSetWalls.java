@@ -16,9 +16,7 @@ import org.skriptlang.skript.registration.SyntaxInfo;
 import org.skriptlang.skript.registration.SyntaxRegistry;
 
 @Name("Region - Set Walls")
-@Description({
-        "Sets the walls of a region, optionally with a mask."
-})
+@Description("Sets the walls of a region, optionally with a mask.")
 @Examples("""
         set walls of {_region} to dirt
         set walls of {_region} to sculk_catalyst[bloom=true]
@@ -32,7 +30,7 @@ public class EffSetWalls extends Effect {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffSetWalls.class)
                 .supplier(EffSetWalls::new)
-                .addPattern("[:async] set [the] walls of [region] %worldeditregions% to " + PatternWrapper.PARSABLE_TYPES_STRING + " [with %-worldeditmask%]")
+                .addPattern("[:lazily] set [the] walls of [region] %worldeditregions% to " + PatternWrapper.PARSABLE_TYPES_STRING + " [with %-worldeditmask%]")
                 .build());
     }
 
@@ -47,7 +45,7 @@ public class EffSetWalls extends Effect {
         regionExpr = (Expression<RegionWrapper>) exprs[0];
         patternExpr = exprs[1];
         maskExpr =  (Expression<MaskWrapper>) exprs[2];
-        async = parseResult.hasTag("async");
+        async = !parseResult.hasTag("lazily");
         if (async && !SkriptWorldEdit.UsesFastAsyncWorldEdit) {
             Skript.warning("Async is only supported with FastAsyncWorldEdit. The operation will run synchronously.");
             async = false;
@@ -67,6 +65,6 @@ public class EffSetWalls extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "async " : "") + "set the walls of region " + regionExpr.toString(event, debug) + " to " + patternExpr.toString(event, debug);
+        return (async ? "" : "lazily ") + "set the walls of region " + regionExpr.toString(event, debug) + " to " + patternExpr.toString(event, debug);
     }
 }

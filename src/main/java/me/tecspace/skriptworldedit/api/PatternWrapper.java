@@ -55,9 +55,6 @@ public record PatternWrapper(Pattern pattern) {
         return new PatternWrapper(pattern);
     }
 
-    /**
-     * Describes the pattern in natural language lol
-     */
     public String describe() {
         return "worldedit pattern";
     }

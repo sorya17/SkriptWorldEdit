@@ -3,7 +3,7 @@
 # SkriptWorldEdit
 
 [![Download on Modrinth](https://raw.githubusercontent.com/intergrav/devins-badges/c7fd18efdadd1c3f12ae56b49afd834640d2d797/assets/cozy/available/modrinth_vector.svg)](https://modrinth.com/plugin/skriptworldedit)
-[![Requires FastAsyncWorldEdit](assets/requires-fawe-badge.svg)](https://modrinth.com/plugin/fastasyncworldedit)
+[![Requires FastAsyncWorldEdit](.github/assets/requires-fawe-badge.svg)](https://modrinth.com/plugin/fastasyncworldedit)
 <a href="http://skripthub.net/docs/?addon=SkriptWorldEdit">
   <img src="http://skripthub.net/static/addon/ViewTheDocsButton.png" height="59">
 </a>

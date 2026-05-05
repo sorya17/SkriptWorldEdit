@@ -25,7 +25,7 @@ public class EffFlood extends Effect {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffFlood.class)
                 .supplier(EffFlood::new)
-                .addPattern("[:async] flood %worldeditregions%")
+                .addPattern("[:lazily] flood %worldeditregions%")
                 .build());
     }
 
@@ -36,7 +36,7 @@ public class EffFlood extends Effect {
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
         regionExpr = (Expression<RegionWrapper>) exprs[0];
-        async = parseResult.hasTag("async");
+        async = !parseResult.hasTag("lazily");
         if (async && !SkriptWorldEdit.UsesFastAsyncWorldEdit) {
             Skript.warning("Async is only supported with FastAsyncWorldEdit. The operation will run synchronously.");
             async = false;
@@ -53,7 +53,7 @@ public class EffFlood extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "async " : "") + "flood " + regionExpr.toString(event, debug);
+        return (async ? "" : "lazily ") + "flood " + regionExpr.toString(event, debug);
     }
 }
 

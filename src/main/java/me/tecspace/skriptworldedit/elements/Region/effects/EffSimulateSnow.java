@@ -26,7 +26,7 @@ public class EffSimulateSnow extends Effect {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffSimulateSnow.class)
                 .supplier(EffSimulateSnow::new)
-                .addPattern("[:async] make (:smooth snow|snow) in %worldeditregions%")
+                .addPattern("[:lazily] make (:smooth snow|snow) in %worldeditregions%")
                  .build());
     }
 
@@ -39,7 +39,7 @@ public class EffSimulateSnow extends Effect {
     public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
         regionExpr = (Expression<RegionWrapper>) exprs[0];
         smooth = parseResult.hasTag("smooth snow");
-        async = parseResult.hasTag("async");
+        async = !parseResult.hasTag("lazily");
         if (async && !SkriptWorldEdit.UsesFastAsyncWorldEdit) {
             Skript.warning("Async is only supported with FastAsyncWorldEdit. The operation will run synchronously.");
             async = false;
@@ -61,9 +61,9 @@ public class EffSimulateSnow extends Effect {
     @Override
     public String toString(@Nullable Event event, boolean debug) {
         if (smooth) {
-            return (async ? "async " : "") + "make smooth snow in " + regionExpr.toString(event, debug);
+            return (async ? "" : "lazily ") + "make smooth snow in " + regionExpr.toString(event, debug);
         } else {
-            return (async ? "async " : "") + "make snow in " + regionExpr.toString(event, debug);
+            return (async ? "" : "lazily ") + "make snow in " + regionExpr.toString(event, debug);
         }
     }
 }

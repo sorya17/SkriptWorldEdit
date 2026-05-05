@@ -30,7 +30,7 @@ public class EffOverlay extends Effect {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffOverlay.class)
                 .supplier(EffOverlay::new)
-                .addPattern("[:async] overlay %worldeditregions% (with|using) [pattern] " + PatternWrapper.PARSABLE_TYPES_STRING)
+                .addPattern("[:lazily] overlay %worldeditregions% (with|using) [pattern] " + PatternWrapper.PARSABLE_TYPES_STRING)
                 .build());
     }
 
@@ -43,7 +43,7 @@ public class EffOverlay extends Effect {
     public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
         regionExpr = (Expression<RegionWrapper>) exprs[0];
         patternExpr = exprs[1];
-        async = parseResult.hasTag("async");
+        async = !parseResult.hasTag("lazily");
         if (async && !SkriptWorldEdit.UsesFastAsyncWorldEdit) {
             Skript.warning("Async is only supported with FastAsyncWorldEdit. The operation will run synchronously.");
             async = false;
@@ -62,6 +62,6 @@ public class EffOverlay extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "async " : "") + "overlay " + regionExpr.toString(event, debug) + " with " + patternExpr.toString(event, debug);
+        return (async ? "" : "lazily ") + "overlay " + regionExpr.toString(event, debug) + " with " + patternExpr.toString(event, debug);
     }
 }

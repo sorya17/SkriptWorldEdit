@@ -32,7 +32,7 @@ public class EffRegenerate extends Effect {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffRegenerate.class)
                 .supplier(EffRegenerate::new)
-                .addPattern("[:async] regenerate [region] %worldeditregions% [using seed %-number%] [:including biomes]")
+                .addPattern("[:lazily] regenerate [region] %worldeditregions% [using seed %-number%] [:including biomes]")
                 .build());
     }
 
@@ -47,7 +47,7 @@ public class EffRegenerate extends Effect {
         regionExpr = (Expression<RegionWrapper>) exprs[0];
         seedExpr = (Expression<Number>) exprs[1];
         includingBiomes = parseResult.hasTag("including biomes");
-        async = parseResult.hasTag("async");
+        async = !parseResult.hasTag("lazily");
         if (async && !SkriptWorldEdit.UsesFastAsyncWorldEdit) {
             Skript.warning("Async is only supported with FastAsyncWorldEdit. The operation will run synchronously.");
             async = false;
@@ -69,6 +69,6 @@ public class EffRegenerate extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "async " : "") + "regenerate region";
+        return (async ? "" : "lazily ") + "regenerate region";
     }
 }

@@ -29,7 +29,7 @@ public class EffHollowOut extends Effect {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffHollowOut.class)
                 .supplier(EffHollowOut::new)
-                .addPattern("[:async] hollow out %worldeditregions% [(using|leaving behind) " + PatternWrapper.PARSABLE_TYPES_STRING + "] [with [a] thickness of %-integer%]")
+                .addPattern("[:lazily] hollow out %worldeditregions% [(using|leaving behind) " + PatternWrapper.PARSABLE_TYPES_STRING + "] [with [a] thickness of %-integer%]")
                 .build());
     }
 
@@ -44,7 +44,7 @@ public class EffHollowOut extends Effect {
         regionExpr = (Expression<RegionWrapper>) exprs[0];
         patternExpr = exprs[1];
         thicknessExpr = (Expression<Integer>) exprs[2];
-        async = parseResult.hasTag("async");
+        async = !parseResult.hasTag("lazily");
         if (async && !SkriptWorldEdit.UsesFastAsyncWorldEdit) {
             Skript.warning("Async is only supported with FastAsyncWorldEdit. The operation will run synchronously.");
             async = false;
@@ -67,6 +67,6 @@ public class EffHollowOut extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "async " : "") + "hollow out " + regionExpr.toString(event, debug);
+        return (async ? "" : "lazily ") + "hollow out " + regionExpr.toString(event, debug);
     }
 }

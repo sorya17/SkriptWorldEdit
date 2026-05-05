@@ -41,7 +41,7 @@ public class EffMakeSphere extends Effect {
     @Override
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-        this.async = parseResult.hasTag("async");
+        this.async = !parseResult.hasTag("lazily");
         this.hollow = parseResult.hasTag("hollow");
         this.patternExpr = expressions[0];
         this.radiusExpr = expressions[1];
@@ -75,6 +75,6 @@ public class EffMakeSphere extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "async " : "") + "make " + (hollow ? "hollow " : "") + "sphere using " + patternExpr.toString(event, debug);
+        return (async ? "" : "lazily ") + "make " + (hollow ? "hollow " : "") + "sphere using " + patternExpr.toString(event, debug);
     }
 }

@@ -14,12 +14,8 @@ import org.skriptlang.skript.registration.SyntaxInfo;
 import org.skriptlang.skript.registration.SyntaxRegistry;
 
 @Name("Region - Shift")
-@Description({
-        "Moves the entire region without changing its size."
-})
-@Examples({
-        "shift {_region} by vector(0, 5, 0)"
-})
+@Description("Moves the entire region without changing its size.")
+@Examples("shift {_region} by vector(0, 5, 0)")
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
 public class EffShift extends Effect {

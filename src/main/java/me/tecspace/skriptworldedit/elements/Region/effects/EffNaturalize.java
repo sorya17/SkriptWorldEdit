@@ -25,7 +25,7 @@ public class EffNaturalize extends Effect {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffNaturalize.class)
                 .supplier(EffNaturalize::new)
-                .addPattern("[:async] naturalize %worldeditregions%")
+                .addPattern("[:lazily] naturalize %worldeditregions%")
                 .build());
     }
 
@@ -36,7 +36,7 @@ public class EffNaturalize extends Effect {
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
         regionExpr = (Expression<RegionWrapper>) exprs[0];
-        async = parseResult.hasTag("async");
+        async = !parseResult.hasTag("lazily");
         if (async && !SkriptWorldEdit.UsesFastAsyncWorldEdit) {
             Skript.warning("Async is only supported with FastAsyncWorldEdit. The operation will run synchronously.");
             async = false;
@@ -53,6 +53,6 @@ public class EffNaturalize extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "async " : "") + "naturalize " + regionExpr.toString(event, debug);
+        return (async ? "" : "lazily ") + "naturalize " + regionExpr.toString(event, debug);
     }
 }

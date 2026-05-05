@@ -24,13 +24,11 @@ public record MaskWrapper(Mask mask) {
     public static final String MASK_SOURCE_TYPES_OPTIONAL = "%-string/itemtypes/blockdatas/minecrafttags/biomes/worldeditregion/worldeditmask%";
 
     /**
-     * Attempts to create a mask from various types,
+     * Attempts to create a {@link MaskWrapper} from various types,
      * which can be a string, region, mask, biomes, item types, or block data.
      */
     public static @Nullable MaskWrapper from(Object[] sources) {
-
         if (sources == null || sources.length == 0) return null;
-
         if (sources.length == 1) {
             if (sources[0] instanceof MaskWrapper wrapper) return wrapper;
             if (sources[0] instanceof Mask mask) return new MaskWrapper(mask);
@@ -83,9 +81,6 @@ public record MaskWrapper(Mask mask) {
         return new MaskWrapper(maskUnion);
     }
 
-    /**
-     * Describes the mask in natural language
-     */
     public String describe() {
         return "WorldEdit Mask";
     }

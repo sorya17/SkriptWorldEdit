@@ -28,7 +28,7 @@ public class EffDrain extends Effect {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffDrain.class)
                 .supplier(EffDrain::new)
-                .addPattern("[:async] drain %worldeditregions%")
+                .addPattern("[:lazily] drain %worldeditregions%")
                 .build());
     }
 
@@ -39,7 +39,7 @@ public class EffDrain extends Effect {
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
         regionExpr = (Expression<RegionWrapper>) exprs[0];
-        async = parseResult.hasTag("async");
+        async = !parseResult.hasTag("lazily");
         if (async && !SkriptWorldEdit.UsesFastAsyncWorldEdit) {
             Skript.warning("Async is only supported with FastAsyncWorldEdit. The operation will run synchronously.");
             async = false;
@@ -56,6 +56,6 @@ public class EffDrain extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "async " : "") + "drain " + regionExpr.toString(event, debug);
+        return (async ? "" : "lazily ") + "drain " + regionExpr.toString(event, debug);
     }
 }
