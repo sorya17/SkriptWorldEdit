@@ -26,4 +26,4 @@ This addon adds Skript syntax to use regions, patterns, schematics and more!
 - Shapes (lines, splines, blobs, circles, cones, cylinders, pyramids, and spheres)
 - Schematics (save & paste)
 
-Head over to the [wiki](https://modrinth.com/plugin/skriptworldedit) for a detailed walkthrough of the syntax and a few examples!
+Head over to the [wiki](https://github.com/sorya17/SkriptWorldEdit/wiki) for a detailed walkthrough of the syntax and a few examples!
