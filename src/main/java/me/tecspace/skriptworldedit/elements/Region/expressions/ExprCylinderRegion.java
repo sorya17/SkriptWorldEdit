@@ -5,12 +5,13 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
-import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.math.Vector2;
 import com.sk89q.worldedit.regions.CylinderRegion;
 import me.tecspace.skriptworldedit.api.RegionWrapper;
+import me.tecspace.skriptworldedit.api.utils.Utils;
 import org.bukkit.Location;
 import org.bukkit.event.Event;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.registration.DefaultSyntaxInfos;
 import org.skriptlang.skript.registration.SyntaxRegistry;
@@ -18,11 +19,11 @@ import org.skriptlang.skript.registration.SyntaxRegistry;
 @Name("Region - Cylinder")
 @Description("""
         Creates a cylindrical region, which can be used for operations.
-        It can have any width, length and height.
         """)
 @Example("""
-        set {_region} to a new cylindrical region at {_loc} with radius 7 and height 1"
-        set {_region} to a new cylindrical region at {_loc} with width 4, length 6 and height 3
+        set {_region} to cylindrical region at {_loc} with radius 7 and height 1
+        set {_region} to cylindrical region at {_loc} with radii (4,7) and height 2
+        set {_region} to cylindrical region at {_loc} with size vector(5,3,7)
         """)
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
@@ -31,52 +32,69 @@ public class ExprCylinderRegion extends SimpleExpression<RegionWrapper> {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EXPRESSION, DefaultSyntaxInfos.Expression.builder(ExprCylinderRegion.class, RegionWrapper.class)
                 .supplier(ExprCylinderRegion::new)
-                .addPattern(
-                        "[a] [new] cyl[ind(er|rical)] region (from|at) %location% with (radius|width) %number%[(,| and) length %-number%] and height %number%"
-                )
+                .addPattern("[a] [new] cyl[ind(er|rical)] region (from|at) %location% with radi(i|us) %numbers% and height %integer%")
+                .addPattern("[a] [new] cyl[ind(er|rical)] region (from|at) %location% with size %vector%")
                 .build()
         );
     }
 
-    private Expression<Location> center;
-    private Expression<Number> width;
-    private @Nullable Expression<Number> length;
-    private Expression<Number> height;
+    private Expression<Location> centerExpr;
+    private @Nullable Expression<Number> radiiExpr;
+    private @Nullable Expression<Vector> sizeExpr;
+    private @Nullable Expression<Number> heightExpr;
 
     @Override
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-        this.center = (Expression<Location>) exprs[0];
-        this.width = (Expression<Number>) exprs[1];
-        this.length = (Expression<Number>) exprs[2];
-        this.height = (Expression<Number>) exprs[3];
+        this.centerExpr = (Expression<Location>) exprs[0];
+        if (matchedPattern == 0) {
+            this.radiiExpr = (Expression<Number>) exprs[1];
+            this.heightExpr = (Expression<Number>) exprs[2];
+        } else {
+            this.sizeExpr = (Expression<Vector>) exprs[1];
+        }
         return true;
     }
 
     @Override
     protected RegionWrapper @Nullable [] get(Event event) {
-        if (center == null || width == null || height == null) return null;
+        if (centerExpr == null) return null;
+        Location center = centerExpr.getSingle(event);
+        if (center == null) return null;
 
-        Location loc = center.getSingle(event);
-        Number widthNum = width.getSingle(event);
-        Number heightNum = height.getSingle(event);
-        Number lengthNum = length != null ? length.getSingle(event) : null;
+        double width, length;
+        int height;
 
-        if (loc == null || widthNum == null || heightNum == null) return null;
+        if (sizeExpr != null) {
+            Vector size = this.sizeExpr.getSingle(event);
+            if (size == null) return null;
 
-        double w = widthNum.doubleValue();
-        double l = lengthNum != null ? lengthNum.doubleValue() : w; // use width
-        int h = heightNum.intValue();
+            width = size.getX();
+            height = size.getBlockY();
+            length = size.getZ();
+
+        } else {
+            if (radiiExpr == null || heightExpr == null) return null;
+
+            Number[] radii = radiiExpr.getAll(event);
+            if (radii == null || radii.length == 0) return null;
+            width = radii[0].doubleValue();
+            length = (radii.length == 1) ? width : radii[1].doubleValue();
+
+            Number heightNum = heightExpr.getSingle(event);
+            if (heightNum == null) return null;
+            height = heightNum.intValue();
+        }
 
         CylinderRegion region = new CylinderRegion(
-                BlockVector3.at(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()),
-                Vector2.at(w, l),
-                loc.getBlockY(),
-                loc.getBlockY() + h - 1
+                Utils.toBlockVector3(center),
+                Vector2.at(width, length),
+                center.getBlockY(),
+                center.getBlockY() + height - 1
         );
 
         return new RegionWrapper[]{
-                new RegionWrapper(region, loc.getWorld())
+                new RegionWrapper(region, center.getWorld())
         };
     }
 
@@ -92,6 +110,12 @@ public class ExprCylinderRegion extends SimpleExpression<RegionWrapper> {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return "cylindrical region at " + center.toString() + " with width " + width.toString() + ", length " + length.toString() + " and height " + height.toString();
+        if (sizeExpr != null) {
+            return "cylindrical region at " + centerExpr.toString() + " with size " + sizeExpr.toString();
+        } else {
+            assert heightExpr != null;
+            assert radiiExpr != null;
+            return "cylindrical region at " + centerExpr.toString() + " with radii " + radiiExpr.toString() + " and height " + heightExpr.toString();
+        }
     }
 }
