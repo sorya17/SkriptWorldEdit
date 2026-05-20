@@ -2,6 +2,7 @@ package me.tecspace.skriptworldedit.api.lang;
 
 import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.util.AsyncEffect;
+import ch.njol.util.Kleenean;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +18,7 @@ public abstract class ConditionalAsyncEffect extends AsyncEffect {
      * Whether this effect should run asynchronously
      */
     public void setAsync(boolean async) {
+        getParser().setHasDelayBefore(Kleenean.get(async));
         this.async = async;
     }
 

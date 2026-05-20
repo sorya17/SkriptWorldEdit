@@ -7,6 +7,7 @@ import ch.njol.skript.lang.Trigger;
 import ch.njol.skript.lang.TriggerItem;
 import ch.njol.skript.timings.SkriptTimings;
 import ch.njol.skript.variables.Variables;
+import ch.njol.util.Kleenean;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,7 @@ public abstract class AsyncSection extends Section {
      * Whether this section should run asynchronously
      */
     public void setAsync(boolean async) {
+        getParser().setHasDelayBefore(Kleenean.get(async));
         this.async = async;
     }
 
