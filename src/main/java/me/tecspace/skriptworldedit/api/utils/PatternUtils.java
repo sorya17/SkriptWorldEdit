@@ -1,4 +1,4 @@
-package me.tecspace.skriptworldedit.api;
+package me.tecspace.skriptworldedit.api.utils;
 
 import ch.njol.skript.aliases.ItemType;
 import com.sk89q.worldedit.WorldEdit;
@@ -13,18 +13,18 @@ import org.bukkit.Bukkit;
 import org.bukkit.block.data.BlockData;
 import org.jetbrains.annotations.Nullable;
 
-public record PatternWrapper(Pattern pattern) {
+public class PatternUtils {
 
     public static final String PARSABLE_TYPES_STRING = "%string/itemtypes/blockdatas/worldeditpattern%";
-    public static final Class<?>[] PARSABLE_TYPES = {String.class, ItemType[].class, BlockData[].class, PatternWrapper.class};
+    public static final Class<?>[] PARSABLE_TYPES = {String.class, ItemType[].class, BlockData[].class, Pattern.class};
 
     /**
-     * Attempts to create a {@link PatternWrapper} from various types,
-     * which can be a string, pattern, item types, or block data.
+     * Attempts to create a {@link Pattern} from various types,
+     * which can be any of {@link #PARSABLE_TYPES}. null if it failed to parse.
      */
-    public static @Nullable PatternWrapper from(Object[] sources) {
+    public static @Nullable Pattern parseFrom(Object[] sources) {
         if (sources.length == 0) return null;
-        if (sources[0] instanceof PatternWrapper wrapper) { return wrapper; }
+        if (sources[0] instanceof Pattern pattern) return pattern;
         if (sources[0] instanceof String s) {
             try {
                 ParserContext context = new ParserContext();
@@ -34,8 +34,7 @@ public record PatternWrapper(Pattern pattern) {
                     context.setPreferringWildcard(false);
                     context.setRestricted(false);
                 }
-                Pattern pattern = WorldEdit.getInstance().getPatternFactory().parseFromInput(s, context);
-                return new PatternWrapper(pattern);
+                return WorldEdit.getInstance().getPatternFactory().parseFromInput(s, context);
             } catch (InputParseException ignored) {
                 return null;
             }
@@ -46,16 +45,13 @@ public record PatternWrapper(Pattern pattern) {
                 //case ItemType item -> pattern.add(BukkitAdapter.asBlockType(item.getMaterial()), 1);
                 case ItemType item -> {
                     BlockType blockType = BukkitAdapter.asBlockType(item.getMaterial());
+                    assert blockType != null;
                     pattern.add(blockType.getDefaultState(), 1);
                 }
                 case BlockData data -> pattern.add(BukkitAdapter.adapt(data), 1);
                 case null, default -> {}
             }
         }
-        return new PatternWrapper(pattern);
-    }
-
-    public String describe() {
-        return "worldedit pattern";
+        return pattern;
     }
 }

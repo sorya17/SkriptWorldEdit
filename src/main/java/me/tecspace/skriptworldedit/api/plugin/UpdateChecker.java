@@ -16,13 +16,12 @@ import java.util.concurrent.CompletableFuture;
 
 public class UpdateChecker {
 
-    //private static final String GITHUB_SOURCE = "tecspace/SkriptWorldEdit";
-    private final String GITHUB_SOURCE;
+    private final String githubSource;
     private final SkriptWorldEdit plugin;
 
     public UpdateChecker(SkriptWorldEdit plugin, String author, String project) {
         this.plugin = plugin;
-        this.GITHUB_SOURCE = author + "/" + project;
+        this.githubSource = author + "/" + project;
     }
 
     public void checkForUpdates() {
@@ -34,7 +33,7 @@ public class UpdateChecker {
 
     private @Nullable Version fetchLatestVersion() {
         try {
-            URL url = URL.of(URI.create("https://api.github.com/repos/" + GITHUB_SOURCE + "/releases/latest"), null);
+            URL url = URL.of(URI.create("https://api.github.com/repos/" + githubSource + "/releases/latest"), null);
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
                 JsonObject json = new Gson().fromJson(reader, JsonObject.class);
                 String tag = json.get("tag_name").getAsString();
@@ -50,7 +49,7 @@ public class UpdateChecker {
             Utils.log("Failed to check for updates.");
         } else if (pluginVersion.isSmallerThan(latest)) {
             Utils.log(
-                    "A new update for SkriptWorldEdit is available (" + pluginVersion + ") You are running (" + latest + "). Download it at https://github.com/" + GITHUB_SOURCE + "/releases");
+                    "A new update for SkriptWorldEdit is available (" + latest + ") You are running (" + pluginVersion + "). Download it at https://github.com/" + githubSource + "/releases");
         } else {
             Utils.log("You are running the latest version!");
         }

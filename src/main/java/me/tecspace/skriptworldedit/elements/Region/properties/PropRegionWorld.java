@@ -2,6 +2,7 @@ package me.tecspace.skriptworldedit.elements.Region.properties;
 
 import ch.njol.skript.doc.*;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import me.tecspace.skriptworldedit.api.RegionWrapper;
 import org.bukkit.World;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +24,7 @@ public class PropRegionWorld extends SimplePropertyExpression<RegionWrapper, Wor
 
     @Override
     public @Nullable World convert(RegionWrapper wrapper) {
-        return wrapper.world();
+        return BukkitAdapter.adapt(wrapper.world());
     }
 
     @Override

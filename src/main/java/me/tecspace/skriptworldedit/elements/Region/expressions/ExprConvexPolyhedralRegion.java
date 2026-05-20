@@ -7,10 +7,10 @@ import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.regions.ConvexPolyhedralRegion;
+import com.sk89q.worldedit.world.World;
 import me.tecspace.skriptworldedit.api.RegionWrapper;
 import me.tecspace.skriptworldedit.api.utils.Utils;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.registration.DefaultSyntaxInfos;
@@ -51,9 +51,9 @@ public class ExprConvexPolyhedralRegion extends SimpleExpression<RegionWrapper> 
         Location[] vertices = this.locationsExpr.getArray(event);
         if (vertices.length == 0) return null;
 
-        World world = vertices[0].getWorld();
+        World world = BukkitAdapter.adapt(vertices[0].getWorld());
 
-        ConvexPolyhedralRegion region = new ConvexPolyhedralRegion(BukkitAdapter.adapt(world));
+        ConvexPolyhedralRegion region = new ConvexPolyhedralRegion(world);
 
         for (Location loc : vertices) {
             region.addVertex(Utils.toBlockVector3(loc));

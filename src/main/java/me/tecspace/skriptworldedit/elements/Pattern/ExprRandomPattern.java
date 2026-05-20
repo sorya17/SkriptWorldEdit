@@ -5,8 +5,8 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
+import com.sk89q.worldedit.function.pattern.Pattern;
 import com.sk89q.worldedit.function.pattern.RandomPattern;
-import me.tecspace.skriptworldedit.api.PatternWrapper;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.registration.DefaultSyntaxInfos;
@@ -22,10 +22,10 @@ import org.skriptlang.skript.registration.SyntaxRegistry;
         """)
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
-public class ExprRandomPattern extends SimpleExpression<PatternWrapper> {
+public class ExprRandomPattern extends SimpleExpression<Pattern> {
 
     public static void register(SyntaxRegistry registry) {
-        registry.register(SyntaxRegistry.EXPRESSION, DefaultSyntaxInfos.Expression.builder(ExprRandomPattern.class, PatternWrapper.class)
+        registry.register(SyntaxRegistry.EXPRESSION, DefaultSyntaxInfos.Expression.builder(ExprRandomPattern.class, Pattern.class)
                 .supplier(ExprRandomPattern::new)
                 .addPattern("[a[n]] (empty|blank|new) random pattern")
                 .build()
@@ -38,9 +38,8 @@ public class ExprRandomPattern extends SimpleExpression<PatternWrapper> {
     }
 
     @Override
-    protected PatternWrapper[] get(Event event) {
-        PatternWrapper region = new PatternWrapper(new RandomPattern());
-        return new PatternWrapper[]{region};
+    protected Pattern[] get(Event event) {
+        return new Pattern[]{new RandomPattern()};
     }
 
     @Override
@@ -49,8 +48,8 @@ public class ExprRandomPattern extends SimpleExpression<PatternWrapper> {
     }
 
     @Override
-    public Class<? extends PatternWrapper> getReturnType() {
-        return PatternWrapper.class;
+    public Class<? extends Pattern> getReturnType() {
+        return Pattern.class;
     }
 
     @Override

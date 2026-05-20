@@ -6,7 +6,7 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import com.fastasyncworldedit.core.function.mask.InverseMask;
-import me.tecspace.skriptworldedit.api.MaskWrapper;
+import com.sk89q.worldedit.function.mask.Mask;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.registration.SyntaxInfo;
@@ -24,34 +24,34 @@ import java.util.List;
 @Example("set {_mask} to inverse mask of dirt, stone and cobblestone")
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
-public class ExprInverseMask extends SimpleExpression<MaskWrapper> {
+public class ExprInverseMask extends SimpleExpression<Mask> {
 
     public static void register(SyntaxRegistry registry) {
-        registry.register(SyntaxRegistry.EXPRESSION, SyntaxInfo.Expression.builder(ExprInverseMask.class, MaskWrapper.class)
+        registry.register(SyntaxRegistry.EXPRESSION, SyntaxInfo.Expression.builder(ExprInverseMask.class, Mask.class)
                 .supplier(ExprInverseMask::new)
                 .addPattern("(inverse|inverted|negated) %worldeditmasks%")
                 .build());
     }
 
-    private Expression<MaskWrapper> wrapperSource;
+    private Expression<Mask> wrapperSource;
 
     @Override
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-        wrapperSource = (Expression<MaskWrapper>) exprs[0];
+        wrapperSource = (Expression<Mask>) exprs[0];
         return true;
     }
 
     @Override
-    protected MaskWrapper @Nullable [] get(Event event) {
+    protected Mask @Nullable [] get(Event event) {
         if (wrapperSource == null) return null;
-        MaskWrapper[] wrappers = wrapperSource.getArray(event);
-        List<MaskWrapper> maskWrappers = new ArrayList<>();
-        for (MaskWrapper wrapper : wrappers) {
-            InverseMask mask = new InverseMask(wrapper.mask());
-            maskWrappers.add(new MaskWrapper(mask));
+        Mask[] wrappers = wrapperSource.getArray(event);
+        List<Mask> maskWrappers = new ArrayList<>();
+        for (Mask mask : wrappers) {
+            InverseMask inverse = new InverseMask(mask);
+            maskWrappers.add(inverse);
         }
-        return maskWrappers.toArray(new MaskWrapper[0]);
+        return maskWrappers.toArray(new Mask[0]);
     }
 
     @Override
@@ -60,8 +60,8 @@ public class ExprInverseMask extends SimpleExpression<MaskWrapper> {
     }
 
     @Override
-    public Class<? extends MaskWrapper> getReturnType() {
-        return MaskWrapper.class;
+    public Class<? extends Mask> getReturnType() {
+        return Mask.class;
     }
 
     @Override

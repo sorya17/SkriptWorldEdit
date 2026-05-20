@@ -20,6 +20,10 @@ public class PlayerUtils {
         return sessionManager.getIfPresent(actor);
     }
 
+    public static @Nullable Region getRegion(Player player) {
+        return getRegion(player, null);
+    }
+
     public static @Nullable Region getRegion(Player player, @Nullable World world) {
         LocalSession session = getSession(player);
         world = (world == null) ? session.getSelectionWorld(): world;

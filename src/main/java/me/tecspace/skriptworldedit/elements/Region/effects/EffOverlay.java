@@ -1,14 +1,14 @@
 package me.tecspace.skriptworldedit.elements.Region.effects;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.doc.*;
-import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
+import com.sk89q.worldedit.function.pattern.Pattern;
 import me.tecspace.skriptworldedit.SkriptWorldEdit;
-import me.tecspace.skriptworldedit.api.PatternWrapper;
+import me.tecspace.skriptworldedit.api.utils.PatternUtils;
 import me.tecspace.skriptworldedit.api.RegionWrapper;
+import me.tecspace.skriptworldedit.api.lang.ConditionalAsyncEffect;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.registration.SyntaxInfo;
@@ -22,46 +22,47 @@ import org.skriptlang.skript.registration.SyntaxRegistry;
         overlay {_region} with pattern "90%%stone,10%%cobblestone"
         overlay {_region} with pattern "#perlin[5][rooted_dirt,dirt,coarse_dirt]"
         overlay {_region} with {_pattern}
-""")
+        """)
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
-public class EffOverlay extends Effect {
+public class EffOverlay extends ConditionalAsyncEffect {
 
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffOverlay.class)
                 .supplier(EffOverlay::new)
-                .addPattern("[:lazily] overlay %worldeditregions% (with|using) [pattern] " + PatternWrapper.PARSABLE_TYPES_STRING)
+                .addPattern("[:lazily] overlay %worldeditregions% (with|using) [pattern] " + PatternUtils.PARSABLE_TYPES_STRING)
                 .build());
     }
 
     private Expression<RegionWrapper> regionExpr;
     private Expression<?> patternExpr;
-    private boolean async;
 
     @Override
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
         regionExpr = (Expression<RegionWrapper>) exprs[0];
         patternExpr = exprs[1];
-        async = !parseResult.hasTag("lazily");
-        if (async && !SkriptWorldEdit.UsesFastAsyncWorldEdit) {
-            Skript.warning("Async is only supported with FastAsyncWorldEdit. The operation will run synchronously.");
-            async = false;
-        }
+        setAsync(!parseResult.hasTag("lazily") && SkriptWorldEdit.UsesFastAsyncWorldEdit);
         return true;
     }
 
     @Override
     protected void execute(Event event) {
-        PatternWrapper pattern = PatternWrapper.from(patternExpr.getArray(event));
-        if (pattern == null) return;
+        if (regionExpr == null) return;
+
+        Pattern pattern = PatternUtils.parseFrom(patternExpr.getArray(event));
+        if (pattern == null) {
+            error("Couldn't parse pattern '" + patternExpr.toString(event, false) + "'. Make sure it's a valid pattern.");
+            return;
+        }
+
         for (RegionWrapper region : regionExpr.getAll(event)) {
-            region.overlay(pattern, async);
+            region.overlay(pattern);
         }
     }
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "" : "lazily ") + "overlay " + regionExpr.toString(event, debug) + " with " + patternExpr.toString(event, debug);
+        return (!isAsync() ? "lazily " : "") + "overlay " + regionExpr.toString(event, debug) + " with " + patternExpr.toString(event, debug);
     }
 }

@@ -3,6 +3,7 @@ package me.tecspace.skriptworldedit.elements.Region.properties;
 import ch.njol.skript.classes.Changer;
 import ch.njol.skript.doc.*;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.ConvexPolyhedralRegion;
 import me.tecspace.skriptworldedit.api.RegionWrapper;
@@ -42,7 +43,12 @@ public class PropRegionVertices extends SimplePropertyExpression<RegionWrapper, 
         for (RegionWrapper wrapper : regions) {
             if (wrapper.region() instanceof ConvexPolyhedralRegion convex) {
                 for (BlockVector3 vertex : convex.getVertices()) {
-                    locations.add(new Location(wrapper.world(), vertex.x(), vertex.y(), vertex.z()));
+                    locations.add(new Location(
+                            BukkitAdapter.adapt(wrapper.world()),
+                            vertex.x(),
+                            vertex.y(),
+                            vertex.z())
+                    );
                 }
             }
         }
@@ -54,7 +60,11 @@ public class PropRegionVertices extends SimplePropertyExpression<RegionWrapper, 
         if (wrapper.region() instanceof ConvexPolyhedralRegion convex) {
             BlockVector3 first = convex.getVertices().stream().findFirst().orElse(null);
             if (first != null) {
-                return new Location(wrapper.world(), first.x(), first.y(), first.z());
+                return new Location(BukkitAdapter.adapt(wrapper.world()),
+                        first.x(),
+                        first.y(),
+                        first.z()
+                );
             }
         }
         return null;

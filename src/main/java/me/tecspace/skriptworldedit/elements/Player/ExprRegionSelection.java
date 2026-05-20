@@ -22,11 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Name("Player - Region Selection")
-@Description({
-        "Gets the selected region of a player.",
-        "Selections are world-specific, so optionally you can provide the world you want. By default it will use the normal world.",
-        "Note that the selection must be complete for this to return a region (example: has both points in a cuboid selection).",
-})
+@Description("""
+        Gets the selected region of a player.
+        Selections are world-specific, so optionally you can provide the world you want. By default it will use the normal world.
+        Note that the selection must be complete for this to return a region (example: has both points in a cuboid selection).
+        """)
 @Example("""
         set {_region} to region selection of player
         set {_region} to region selection of player in world "world_nether"
@@ -61,7 +61,7 @@ public class ExprRegionSelection extends SimpleExpression<RegionWrapper> {
         for (Player player : playersExpr.getAll(event)) {
             try {
                 Region region = PlayerUtils.getRegion(player, BukkitAdapter.adapt(world));
-                regions.add(new RegionWrapper(region, world));
+                regions.add(new RegionWrapper(region, BukkitAdapter.adapt(world)));
             } catch (IncompleteRegionException ignored) {}
         }
         return regions.toArray(new RegionWrapper[0]);

@@ -6,7 +6,7 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import com.sk89q.worldedit.function.mask.BoundedHeightMask;
-import me.tecspace.skriptworldedit.api.MaskWrapper;
+import com.sk89q.worldedit.function.mask.Mask;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.registration.SyntaxInfo;
@@ -17,10 +17,10 @@ import org.skriptlang.skript.registration.SyntaxRegistry;
 @Example("set {_mask} to a bounded height mask between 0 and 63")
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
-public class ExprBoundedHeightMask extends SimpleExpression<MaskWrapper> {
+public class ExprBoundedHeightMask extends SimpleExpression<Mask> {
 
     public static void register(SyntaxRegistry registry) {
-        registry.register(SyntaxRegistry.EXPRESSION, SyntaxInfo.Expression.builder(ExprBoundedHeightMask.class, MaskWrapper.class)
+        registry.register(SyntaxRegistry.EXPRESSION, SyntaxInfo.Expression.builder(ExprBoundedHeightMask.class, Mask.class)
                 .supplier(ExprBoundedHeightMask::new)
                 .addPattern("[a] bounded height mask (between|from) %integer% (and|to) %integer%")
                 .build());
@@ -38,12 +38,13 @@ public class ExprBoundedHeightMask extends SimpleExpression<MaskWrapper> {
     }
 
     @Override
-    protected MaskWrapper @Nullable [] get(Event event) {
+    protected Mask @Nullable [] get(Event event) {
         Integer first = firstExpression.getSingle(event);
         Integer second = secondExpression.getSingle(event);
-        if (first == null || second == null) { return null; }
+        if (first == null || second == null) return null;
+
         BoundedHeightMask mask = new BoundedHeightMask(Math.min(first, second), Math.max(first, second));
-        return new MaskWrapper[]{new MaskWrapper(mask)};
+        return new Mask[]{mask};
     }
 
     @Override
@@ -52,8 +53,8 @@ public class ExprBoundedHeightMask extends SimpleExpression<MaskWrapper> {
     }
 
     @Override
-    public Class<? extends MaskWrapper> getReturnType() {
-        return MaskWrapper.class;
+    public Class<? extends Mask> getReturnType() {
+        return Mask.class;
     }
 
     @Override

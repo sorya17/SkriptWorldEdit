@@ -28,9 +28,10 @@ import org.skriptlang.skript.lang.properties.handlers.base.ExpressionPropertyHan
 import java.io.NotSerializableException;
 import java.io.StreamCorruptedException;
 
-public class Region {
+public class RegionClassInfo {
 
-    public static void register(SkriptAddon skriptAddon) {
+    @SuppressWarnings("UnstableApiUsage")
+    public static void register(SkriptAddon addon) {
         Classes.registerClass(new ClassInfo<>(RegionWrapper.class, "worldeditregion")
                 .user("worldedit ?regions?")
                 .name("WorldEdit Region")
@@ -53,16 +54,16 @@ public class Region {
                         return "worldeditregion:" + region.toString();
                     }
                 })
-                .property(Property.SCALE, "The scale of a region. returns a vector. If the region is not a cuboid it will still return the cuboid dimensions.", skriptAddon,
+                .property(Property.SCALE, "The scale of a region. returns a vector. If the region is not a cuboid it will still return the cuboid dimensions.", addon,
                         ExpressionPropertyHandler.of(region -> {
                             BlockVector3 dimensions = region.region().getDimensions();
                             return new Vector(dimensions.x(), dimensions.y(), dimensions.z());
                         }, Vector.class))
 
-                .property(Property.SIZE, "The size/volume of a region. returns the amount of blocks.", skriptAddon,
+                .property(Property.SIZE, "The size/volume of a region. returns the amount of blocks.", addon,
                         ExpressionPropertyHandler.of(region -> region.region().getVolume(), Long.class))
 
-                .property(Property.CONTAINS, "Regions can contain locations, blocks, chunks and other regions.", skriptAddon,
+                .property(Property.CONTAINS, "Regions can contain locations, blocks, chunks and other regions.", addon,
                         new ContainsHandler<RegionWrapper, Object>() {
                             @Override
                             public boolean contains(RegionWrapper region, Object element) {
@@ -148,7 +149,8 @@ public class Region {
                     @Override
                     protected RegionWrapper deserialize(Fields fields) throws StreamCorruptedException {
                         String regionType = fields.getObject("regionType", String.class);
-                        World world = fields.getObject("world", World.class);
+                        World bukkitWorld = fields.getObject("world", World.class);
+                        com.sk89q.worldedit.world.World world = BukkitAdapter.adapt(bukkitWorld);
                         assert regionType != null;
                         return switch (regionType) {
                             case "cuboid" -> {
@@ -185,7 +187,7 @@ public class Region {
                                 yield new RegionWrapper(new EllipsoidRegion(center, radius), world);
                             }
                             case "convex" -> {
-                                ConvexPolyhedralRegion region = new ConvexPolyhedralRegion(BukkitAdapter.adapt(world));
+                                ConvexPolyhedralRegion region = new ConvexPolyhedralRegion(world);
                                 int size = fields.getPrimitive("size", int.class);
                                 for (int i = 0; i < size; i++) {
                                     int x = fields.getPrimitive(String.format("vertex-%dX", i), int.class);

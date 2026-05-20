@@ -1,12 +1,14 @@
 package me.tecspace.skriptworldedit.elements.Shapes.effects;
 
 import ch.njol.skript.doc.*;
-import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
+import com.sk89q.worldedit.function.pattern.Pattern;
 import com.sk89q.worldedit.math.Vector3;
-import me.tecspace.skriptworldedit.api.PatternWrapper;
+import me.tecspace.skriptworldedit.SkriptWorldEdit;
+import me.tecspace.skriptworldedit.api.lang.ConditionalAsyncEffect;
+import me.tecspace.skriptworldedit.api.utils.PatternUtils;
 import me.tecspace.skriptworldedit.api.Shapes;
 import org.bukkit.Location;
 import org.bukkit.event.Event;
@@ -30,12 +32,12 @@ import org.skriptlang.skript.registration.SyntaxRegistry;
         """)
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
-public class EffMakeBlob extends Effect {
+public class EffMakeBlob extends ConditionalAsyncEffect {
 
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffMakeBlob.class)
                 .supplier(EffMakeBlob::new)
-                .addPattern("[:lazily] make [a] blob (of|with|using) [pattern] " + PatternWrapper.PARSABLE_TYPES_STRING + " with [a] size [of] %number%" +
+                .addPattern("[:lazily] make [a] blob (of|with|using) [pattern] " + PatternUtils.PARSABLE_TYPES_STRING + " with [a] size [of] %number%" +
                         "[(,| and) [a] frequency [of] %-number%]" +
                         "[(,| and) [a] amplitude [of] %-number%]" +
                         "[(,| and) [a] radius [of] %-vector%]" +
@@ -44,7 +46,6 @@ public class EffMakeBlob extends Effect {
                 .build());
     }
 
-    private boolean async;
     private Expression<?> patternExpr;
     private Expression<Number> sizeExpr;
     private @Nullable Expression<Number> frequencyExpr;
@@ -56,7 +57,7 @@ public class EffMakeBlob extends Effect {
     @Override
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-        this.async = !parseResult.hasTag("lazily");
+        setAsync(!parseResult.hasTag("lazily") && SkriptWorldEdit.UsesFastAsyncWorldEdit);
         this.patternExpr = exprs[0];
         this.sizeExpr = (Expression<Number>) exprs[1];
         this.frequencyExpr = (Expression<Number>) exprs[2];
@@ -69,7 +70,7 @@ public class EffMakeBlob extends Effect {
 
     @Override
     protected void execute(Event event) {
-        PatternWrapper pattern = PatternWrapper.from(patternExpr.getArray(event));
+        Pattern pattern = PatternUtils.parseFrom(patternExpr.getArray(event));
         Location[] locations = locationsExpr.getArray(event);
 
         if (pattern == null || locations == null || locations.length == 0) return;
@@ -86,7 +87,7 @@ public class EffMakeBlob extends Effect {
         Vector3 radiusD = Vector3.at(rawRad.getX(), rawRad.getY(), rawRad.getZ());
 
         for (Location loc : locations) {
-            Shapes.makeBlob(loc, pattern.pattern(), size, freq, amp, radiusD, sph, async);
+            Shapes.makeBlob(loc, pattern, size, freq, amp, radiusD, sph);
         }
     }
 
@@ -98,7 +99,7 @@ public class EffMakeBlob extends Effect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "" : "lazily ") + "make a blob using " + patternExpr.toString(event, debug) + " with size " + sizeExpr.toString(event, debug) +
+        return (!isAsync() ? "lazily " : "") + "make a blob using " + patternExpr.toString(event, debug) + " with size " + sizeExpr.toString(event, debug) +
                 ", frequency " + frequencyExpr.toString(event, debug) +
                 ", amplitude " + amplitudeExpr.toString(event, debug) +
                 ", radius " + radiusExpr.toString(event, debug) +

@@ -3,18 +3,24 @@ package me.tecspace.skriptworldedit.elements.Region.properties;
 import ch.njol.skript.classes.Changer;
 import ch.njol.skript.doc.*;
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
+import com.sk89q.worldedit.function.pattern.Pattern;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.world.block.BlockTypes;
-import me.tecspace.skriptworldedit.api.PatternWrapper;
+import me.tecspace.skriptworldedit.api.utils.PatternUtils;
 import me.tecspace.skriptworldedit.api.RegionWrapper;
+import me.tecspace.skriptworldedit.api.utils.Utils;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.registration.SyntaxRegistry;
 
 @Name("Region - Walls")
-@Description("The walls of a region as a new region (cuboid regions only).")
-@Example("set {_hollow} to walls of {_region}")
+@Description("The walls of a region as a new region. This is intended for cuboid regions.")
+@Example("""
+        set {_walls} to walls of {_region}
+        set {_region}'s walls to oak planks
+        delete {_region}'s walls
+        """)
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
 public class PropRegionWalls extends SimplePropertyExpression<RegionWrapper, RegionWrapper> {
@@ -30,13 +36,14 @@ public class PropRegionWalls extends SimplePropertyExpression<RegionWrapper, Reg
     public @Nullable RegionWrapper convert(RegionWrapper wrapper) {
         if (wrapper.region() instanceof CuboidRegion cuboid)
             return new RegionWrapper(cuboid.getWalls(), wrapper.world());
-        return null;
+        else
+            return new RegionWrapper(wrapper.region().getBoundingBox().getWalls(), wrapper.world());
     }
 
     @Override
     public Class<?> @Nullable [] acceptChange(Changer.ChangeMode mode) {
         return switch (mode) {
-            case SET -> PatternWrapper.PARSABLE_TYPES;
+            case SET -> PatternUtils.PARSABLE_TYPES;
             case DELETE -> new Class[]{};
             default -> null;
         };
@@ -44,13 +51,14 @@ public class PropRegionWalls extends SimplePropertyExpression<RegionWrapper, Reg
 
     @Override
     public void change(Event event, Object @Nullable [] delta, Changer.ChangeMode mode) {
-        PatternWrapper pattern;
+        Pattern pattern;
         switch (mode) {
             case SET -> {
                 if (delta == null) return;
-                pattern = PatternWrapper.from(delta);
+                pattern = PatternUtils.parseFrom(delta);
+                if (pattern == null) return;
             }
-            case DELETE -> pattern = new PatternWrapper(BlockTypes.AIR);
+            case DELETE -> pattern = BlockTypes.AIR;
             default -> {
                 return;
             }
@@ -58,9 +66,13 @@ public class PropRegionWalls extends SimplePropertyExpression<RegionWrapper, Reg
         RegionWrapper[] regions = getExpr().getAll(event);
         if (regions == null) return;
         for (RegionWrapper wrapper : regions) {
+
             Region walls = wrapper.region().getBoundingBox().getWalls();
-            var region = new RegionWrapper(walls, wrapper.world());
-            region.setBlocks(pattern, true);
+            RegionWrapper region = new RegionWrapper(walls, wrapper.world());
+
+            Utils.run(true, () ->
+                    region.setBlocks(pattern)
+            );
         }
     }
 

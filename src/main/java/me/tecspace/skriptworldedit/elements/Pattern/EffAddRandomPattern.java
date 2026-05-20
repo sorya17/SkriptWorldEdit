@@ -7,7 +7,7 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
 import com.sk89q.worldedit.function.pattern.Pattern;
 import com.sk89q.worldedit.function.pattern.RandomPattern;
-import me.tecspace.skriptworldedit.api.PatternWrapper;
+import me.tecspace.skriptworldedit.api.utils.PatternUtils;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.registration.SyntaxInfo;
@@ -32,36 +32,35 @@ public class EffAddRandomPattern extends Effect {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffAddRandomPattern.class)
                 .supplier(EffAddRandomPattern::new)
-                .addPattern("add " + PatternWrapper.PARSABLE_TYPES_STRING + " with [a] (chance|weight|probability) [of] %number% to %worldeditpatterns%")
+                .addPattern("add " + PatternUtils.PARSABLE_TYPES_STRING + " with [a] (chance|weight|probability) [of] %number% to %worldeditpatterns%")
                 .build());
     }
 
     private Expression<?> patternExpr;
     private Expression<Number> chanceExpr;
-    private Expression<PatternWrapper> randomPatternExpr;
+    private Expression<Pattern> randomPatternExpr;
 
     @Override
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
         patternExpr = expressions[0];
         chanceExpr = (Expression<Number>) expressions[1];
-        randomPatternExpr = (Expression<PatternWrapper>) expressions[2];
+        randomPatternExpr = (Expression<Pattern>) expressions[2];
         return true;
     }
 
     @Override
     protected void execute(Event event) {
-        PatternWrapper pattern = PatternWrapper.from(patternExpr.getArray(event));
+        Pattern pattern = PatternUtils.parseFrom(patternExpr.getArray(event));
         if (pattern == null) return;
 
         Number chanceN = chanceExpr.getSingle(event);
         if (chanceN == null) return;
         double chance = chanceN.doubleValue();
 
-        for (PatternWrapper wrapper : randomPatternExpr.getArray(event)) {
-            Pattern p = wrapper.pattern();
-            if (p instanceof RandomPattern) {
-                ((RandomPattern) p).add(pattern.pattern(), chance);
+        for (Pattern rp : randomPatternExpr.getArray(event)) {
+            if (rp instanceof RandomPattern p) {
+                p.add(pattern, chance);
             }
         }
 

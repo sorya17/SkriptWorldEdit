@@ -55,7 +55,7 @@ public class ExprCuboidRegion extends SimpleExpression<RegionWrapper> {
         BlockVector3 pos2 = BlockVector3.at(loc2.getBlockX(), loc2.getBlockY(), loc2.getBlockZ());
 
         CuboidRegion region = new CuboidRegion(BukkitAdapter.adapt(loc1.getWorld()), pos1, pos2);
-        RegionWrapper wrapper = new RegionWrapper(region, loc1.getWorld());
+        RegionWrapper wrapper = new RegionWrapper(region, BukkitAdapter.adapt(loc1.getWorld()));
 
         return new RegionWrapper[]{wrapper};
     }

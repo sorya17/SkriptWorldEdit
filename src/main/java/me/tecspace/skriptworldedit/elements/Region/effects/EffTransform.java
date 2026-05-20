@@ -6,7 +6,6 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.util.Direction;
 import ch.njol.util.Kleenean;
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.world.World;
 import me.tecspace.skriptworldedit.api.RegionWrapper;
@@ -73,7 +72,7 @@ public class EffTransform extends Effect {
 
         if (vertically) {
             for (RegionWrapper region : wrappers) {
-                World weWorld = BukkitAdapter.adapt(region.world());
+                World weWorld = region.world();
                 region.region().expand(BlockVector3.at(0, weWorld.getMaxY() - region.region().getMaximumPoint().y(), 0));
                 region.region().expand(BlockVector3.at(0, -(region.region().getMinimumPoint().y() - weWorld.getMinY()), 0));
             }

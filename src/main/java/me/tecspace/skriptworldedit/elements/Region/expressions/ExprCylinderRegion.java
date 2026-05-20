@@ -5,6 +5,7 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.math.Vector2;
 import com.sk89q.worldedit.regions.CylinderRegion;
 import me.tecspace.skriptworldedit.api.RegionWrapper;
@@ -94,7 +95,7 @@ public class ExprCylinderRegion extends SimpleExpression<RegionWrapper> {
         );
 
         return new RegionWrapper[]{
-                new RegionWrapper(region, center.getWorld())
+                new RegionWrapper(region, BukkitAdapter.adapt(center.getWorld()))
         };
     }
 

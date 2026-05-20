@@ -5,7 +5,7 @@ import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
-import me.tecspace.skriptworldedit.api.MaskWrapper;
+import com.sk89q.worldedit.function.mask.Mask;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.registration.SyntaxInfo;
@@ -29,20 +29,19 @@ public class EffInverseMask extends Effect {
                 .build());
     }
 
-    private Expression<MaskWrapper> maskExpr;
+    private Expression<Mask> maskExpr;
 
     @Override
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-        maskExpr = (Expression<MaskWrapper>) exprs[0];
+        maskExpr = (Expression<Mask>) exprs[0];
         return true;
     }
 
     @Override
     protected void execute(Event event) {
-        MaskWrapper[] wrappers = maskExpr.getArray(event);
-        for (MaskWrapper wrapper : wrappers) {
-            wrapper.mask().inverse();
+        for (Mask mask : maskExpr.getArray(event)) {
+            mask.inverse();
         }
     }
 

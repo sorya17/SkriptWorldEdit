@@ -103,7 +103,7 @@ public class ExprEllipsoidRegion extends SimpleExpression<RegionWrapper> {
                 radiusVec
         );
 
-        return new RegionWrapper[]{new RegionWrapper(region, loc.getWorld())};
+        return new RegionWrapper[]{new RegionWrapper(region, BukkitAdapter.adapt(loc.getWorld()))};
     }
 
     @Override

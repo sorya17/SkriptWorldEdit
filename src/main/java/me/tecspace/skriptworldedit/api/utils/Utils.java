@@ -3,8 +3,6 @@ package me.tecspace.skriptworldedit.api.utils;
 import ch.njol.skript.Skript;
 import ch.njol.skript.log.ErrorQuality;
 import com.sk89q.worldedit.math.BlockVector3;
-import com.sk89q.worldedit.math.transform.AffineTransform;
-import com.sk89q.worldedit.math.transform.Transform;
 import me.tecspace.skriptworldedit.SkriptWorldEdit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -15,7 +13,6 @@ import io.papermc.paper.registry.tag.Tag;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.file.Path;
@@ -41,16 +38,14 @@ public class Utils {
     }
 
     /**
-     * Converts a bukkit location to a BlockVector3
-     * @param loc the location to convert
+     * Converts a {@link Location} to a {@link BlockVector3}
      */
     public static BlockVector3 toBlockVector3(Location loc) {
         return BlockVector3.at(loc.x(), loc.y(), loc.z());
     }
 
     /**
-     * Converts an array of bukkit locations into an array of BlockVector3
-     * @param locs an array of locations to convert
+     * Converts an array of {@link Location} into an array of {@link BlockVector3}
      */
     public static BlockVector3[] toBlockVector3(Location[] locs) {
         return Arrays.stream(locs)
@@ -59,8 +54,15 @@ public class Utils {
     }
 
     /**
-     * Check whether a tag is a material tag
-     * Author: ShaneBeee/SkBee
+     * Converts a {@link Vector} to a {@link BlockVector3}
+     */
+    public static BlockVector3 toBlockVector3(Vector vec) {
+        return BlockVector3.at(vec.getX(), vec.getY(), vec.getZ());
+    }
+
+    /**
+     * Check if a {@link Tag} is a {@link Material} Tag.
+     * @author <a href="https://github.com/ShaneBeee/SkBee/">ShaneBeee - SkBee</a>
      */
     public static boolean isMaterialTag(Tag<?> tag) {
         ParameterizedType superC = (ParameterizedType) tag.getClass().getGenericSuperclass();
@@ -80,22 +82,34 @@ public class Utils {
     }
 
     /**
-     * Runs operation async only if async is true and FAWE is used
+     * Runs the operation async only if async is true and FAWE is used
+     * @param async whether to run it asynchronously
+     * @param runnable the code to run
      */
     public static void run(boolean async, Runnable runnable) {
-        if (SkriptWorldEdit.UsesFastAsyncWorldEdit && async) {
-            Bukkit.getScheduler().runTaskAsynchronously(SkriptWorldEdit.getInstance(), runnable);
-        } else {
-            runnable.run();
-            //Bukkit.getScheduler().runTask(SkriptWorldEdit.getInstance(), runnable);
-        }
+        run(async, runnable, null);
     }
 
     /**
-     * Force FAWE to evaluate the value async to prevent an exception, while waiting on main thread.
-     * FAWE expects some things to be done async so this ensures that, even when we need it immediately.
+     * Runs the operation async only if async is true and FAWE is used, and code to be run afterward on the main thread
+     * @param async whether to run it asynchronously
+     * @param runnable the code to run
+     * @param callback code to run afterward on the main thread
      */
-    public static <T> T evalAsyncBlocking(T defaultValue, Supplier<T> supplier) {
+    public static void run(boolean async, Runnable runnable, @Nullable Runnable callback) {
+        if (SkriptWorldEdit.UsesFastAsyncWorldEdit && async) {
+            Bukkit.getScheduler().runTaskAsynchronously(SkriptWorldEdit.getInstance(), () -> {
+                runnable.run();
+                if (callback != null)
+                    Bukkit.getScheduler().runTask(SkriptWorldEdit.getInstance(), callback);
+            });
+        } else {
+            runnable.run();
+            if (callback != null) callback.run();
+        }
+    }
+
+    public static <T> T getAsyncBlocking(T defaultValue, Supplier<T> supplier) {
         if (SkriptWorldEdit.UsesFastAsyncWorldEdit) {
             try {
                 T result = CompletableFuture.supplyAsync(supplier).get();

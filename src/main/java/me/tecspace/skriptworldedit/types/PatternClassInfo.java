@@ -4,13 +4,13 @@ import ch.njol.skript.classes.ClassInfo;
 import ch.njol.skript.classes.Parser;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.registrations.Classes;
-import me.tecspace.skriptworldedit.api.PatternWrapper;
+import com.sk89q.worldedit.function.pattern.Pattern;
 import org.skriptlang.skript.addon.SkriptAddon;
 
-public class Pattern {
+public class PatternClassInfo {
 
-    public static void register(SkriptAddon skriptAddon) {
-        Classes.registerClass(new ClassInfo<>(PatternWrapper.class, "worldeditpattern")
+    public static void register(SkriptAddon addon) {
+        Classes.registerClass(new ClassInfo<>(Pattern.class, "worldeditpattern")
                 .user("worldedit ?patterns?")
                 .name("WorldEdit Pattern")
                 .description("A WorldEdit Pattern")
@@ -23,13 +23,13 @@ public class Pattern {
                     }
 
                     @Override
-                    public String toString(PatternWrapper pattern, int flags) {
-                        return pattern.describe();
+                    public String toString(Pattern pattern, int flags) {
+                        return pattern.toString();
                     }
 
                     @Override
-                    public String toVariableNameString(PatternWrapper wrapper) {
-                        return wrapper.toString();
+                    public String toVariableNameString(Pattern pattern) {
+                        return pattern.toString();
                     }
                 })
         );

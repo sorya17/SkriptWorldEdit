@@ -1,11 +1,13 @@
 package me.tecspace.skriptworldedit.elements.Shapes.effects;
 
 import ch.njol.skript.doc.*;
-import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
-import me.tecspace.skriptworldedit.api.PatternWrapper;
+import com.sk89q.worldedit.function.pattern.Pattern;
+import me.tecspace.skriptworldedit.SkriptWorldEdit;
+import me.tecspace.skriptworldedit.api.lang.ConditionalAsyncEffect;
+import me.tecspace.skriptworldedit.api.utils.PatternUtils;
 import me.tecspace.skriptworldedit.api.Shapes;
 import org.bukkit.Location;
 import org.bukkit.event.Event;
@@ -30,12 +32,12 @@ import org.skriptlang.skript.registration.SyntaxRegistry;
         """)
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
-public class EffDrawSpline extends Effect {
+public class EffDrawSpline extends ConditionalAsyncEffect {
 
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffDrawSpline.class)
                 .supplier(EffDrawSpline::new)
-                .addPattern("[:lazily] draw [a] [:hollow] spline (of|with|using) [pattern] " + PatternWrapper.PARSABLE_TYPES_STRING + " with tension %number%" +
+                .addPattern("[:lazily] draw [a] [:hollow] spline (of|with|using) [pattern] " + PatternUtils.PARSABLE_TYPES_STRING + " with tension %number%" +
                         "[(,| and) [a] bias [of] %-number%]" +
                         "[(,| and) [a] continuity [of] %-number%]" +
                         "[(,| and) [a] quality [of] %-number%]" +
@@ -44,7 +46,6 @@ public class EffDrawSpline extends Effect {
                 .build());
     }
 
-    private boolean async;
     private boolean hollow;
     private Expression<?> patternExpr;
     private Expression<Number> tensionExpr;
@@ -57,7 +58,7 @@ public class EffDrawSpline extends Effect {
     @Override
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-        this.async = !parseResult.hasTag("lazily");
+        setAsync(!parseResult.hasTag("lazily") && SkriptWorldEdit.UsesFastAsyncWorldEdit);
         this.hollow = parseResult.hasTag("hollow");
         this.patternExpr = expressions[0];
         this.tensionExpr = (Expression<Number>) expressions[1];
@@ -71,7 +72,7 @@ public class EffDrawSpline extends Effect {
 
     @Override
     protected void execute(Event event) {
-        PatternWrapper pattern = PatternWrapper.from(patternExpr.getArray(event));
+        Pattern pattern = PatternUtils.parseFrom(patternExpr.getArray(event));
         if (pattern == null) return;
 
         Location[] locations = locationsExpr.getArray(event);
@@ -84,18 +85,18 @@ public class EffDrawSpline extends Effect {
         Number quality = qualityExpr != null ? qualityExpr.getSingle(event) : null;
         Number thickness = thicknessExpr != null ? thicknessExpr.getSingle(event) : null;
 
-        Shapes.drawSpline(pattern.pattern(), locations,
+        Shapes.drawSpline(pattern, locations,
                 tension.doubleValue(),
                 bias != null ? bias.doubleValue() : 0,
                 continuity != null ? continuity.doubleValue() : 0,
                 quality != null ? quality.doubleValue() : 10,
                 thickness != null ? thickness.doubleValue() : 0,
-                !hollow, async);
+                !hollow);
     }
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "" : "lazily ") + "draw " + (hollow ? "hollow " : "") + "spline using "
+        return (!isAsync() ? "lazily " : "") + "draw " + (hollow ? "hollow " : "") + "spline using "
                 + patternExpr.toString(event, debug)
                 + " with tension " + tensionExpr.toString(event, debug)
                 + (biasExpr != null ? ", bias " + biasExpr.toString(event, debug) : "")

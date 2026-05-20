@@ -5,6 +5,7 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.math.BlockVector3;
 import me.tecspace.skriptworldedit.api.RegionWrapper;
 import org.bukkit.Location;
@@ -41,7 +42,12 @@ public class PropRegionPoints extends SimplePropertyExpression<RegionWrapper, Lo
         } else {
             point = wrapper.region().getMaximumPoint();
         }
-        return new Location(wrapper.world(), point.x(), point.y(), point.z());
+        return new Location(
+                BukkitAdapter.adapt(wrapper.world()),
+                point.x(),
+                point.y(),
+                point.z()
+        );
     }
 
     @Override

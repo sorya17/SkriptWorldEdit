@@ -6,7 +6,8 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import ch.njol.util.coll.CollectionUtils;
-import me.tecspace.skriptworldedit.api.MaskWrapper;
+import com.sk89q.worldedit.function.mask.Mask;
+import me.tecspace.skriptworldedit.api.utils.MaskUtils;
 import me.tecspace.skriptworldedit.api.RegionWrapper;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +29,8 @@ public class ExprCountBlocks extends SimpleExpression<Number> {
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EXPRESSION, SyntaxInfo.Expression.builder(ExprCountBlocks.class, Number.class)
                 .supplier(ExprCountBlocks::new)
-                .addPattern("[the] (count|number|amount) of blocks in %worldeditregions% (that match|matching) [mask] " + MaskWrapper.MASK_SOURCE_TYPES)
-                .addPattern("[the] (count|number|amount) of " + MaskWrapper.MASK_SOURCE_TYPES + " [blocks] in %worldeditregions%")
+                .addPattern("[the] (count|number|amount) of blocks in %worldeditregions% (that match|matching) [mask] " + MaskUtils.MASK_SOURCE_TYPES)
+                .addPattern("[the] (count|number|amount) of " + MaskUtils.MASK_SOURCE_TYPES + " [blocks] in %worldeditregions%")
                 .build());
     }
 
@@ -45,9 +46,13 @@ public class ExprCountBlocks extends SimpleExpression<Number> {
     }
 
     @Override
-    protected Number @Nullable [] get(Event event) {
-        MaskWrapper mask = MaskWrapper.from(maskExpr.getArray(event));
-        if (mask == null) return null;
+    protected @Nullable Number[] get(Event event) {
+        Mask mask = MaskUtils.parseFrom(maskExpr.getArray(event));
+        if (mask == null) {
+            error("Couldn't parse mask '" + maskExpr.toString(event, false) + "'. Make sure it's a valid mask.");
+            return null;
+        }
+
         int count = 0;
         for (RegionWrapper region : regionExpr.getArray(event)) {
             count += region.countBlocks(mask);

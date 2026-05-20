@@ -49,18 +49,20 @@ public class ClipboardManager {
         CLIPBOARD_MAP.clear();
     }
 
-    private static ClipboardWrapper loadClipboard(Path path) throws IOException {
+    public static ClipboardWrapper loadClipboard(Path path) {
         File file = path.toFile();
         if (!file.exists())
-            throw new IOException("File does not exist: " + file);
+            throw new RuntimeException("File does not exist: " + file);
 
         ClipboardFormat format = ClipboardFormats.findByFile(file);
         if (format == null)
-            throw new IOException("Unsupported or unrecognized schematic format: " + file);
+            throw new RuntimeException("Unsupported or unrecognized schematic format: " + file);
 
         try (FileInputStream fis = new FileInputStream(file);
              ClipboardReader reader = format.getReader(fis)) {
-            return new ClipboardWrapper(reader.read());
+             return new ClipboardWrapper(reader.read());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }

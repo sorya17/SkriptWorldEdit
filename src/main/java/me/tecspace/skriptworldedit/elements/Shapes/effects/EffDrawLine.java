@@ -1,11 +1,13 @@
 package me.tecspace.skriptworldedit.elements.Shapes.effects;
 
 import ch.njol.skript.doc.*;
-import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
-import me.tecspace.skriptworldedit.api.PatternWrapper;
+import com.sk89q.worldedit.function.pattern.Pattern;
+import me.tecspace.skriptworldedit.SkriptWorldEdit;
+import me.tecspace.skriptworldedit.api.lang.ConditionalAsyncEffect;
+import me.tecspace.skriptworldedit.api.utils.PatternUtils;
 import me.tecspace.skriptworldedit.api.Shapes;
 import org.bukkit.Location;
 import org.bukkit.event.Event;
@@ -25,16 +27,15 @@ import org.skriptlang.skript.registration.SyntaxRegistry;
         """)
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
-public class EffDrawLine extends Effect {
+public class EffDrawLine extends ConditionalAsyncEffect {
 
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffDrawLine.class)
                 .supplier(EffDrawLine::new)
-                .addPattern("[:lazily] draw [a] [:hollow] line (of|with|using) [pattern] " + PatternWrapper.PARSABLE_TYPES_STRING + " [with [a] thickness [of] %-number%] between %locations%")
+                .addPattern("[:lazily] draw [a] [:hollow] line (of|with|using) [pattern] " + PatternUtils.PARSABLE_TYPES_STRING + " [with [a] thickness [of] %-number%] between %locations%")
                 .build());
     }
 
-    private boolean async;
     private boolean filled;
     private Expression<?> patternExpr;
     private @Nullable Expression<Number> radiusExpr;
@@ -43,7 +44,7 @@ public class EffDrawLine extends Effect {
     @Override
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-        this.async = !parseResult.hasTag("lazily");
+        setAsync(!parseResult.hasTag("lazily") && SkriptWorldEdit.UsesFastAsyncWorldEdit);
         this.filled = !parseResult.hasTag("hollow");
         this.patternExpr = expressions[0];
         this.radiusExpr = (Expression<Number>) expressions[1];
@@ -55,13 +56,13 @@ public class EffDrawLine extends Effect {
     protected void execute(Event event) {
         Number radius = (radiusExpr != null) ? radiusExpr.getSingle(event) : null;
         double rad = (radius != null) ? radius.doubleValue() : 0d;
-        PatternWrapper pattern = PatternWrapper.from(patternExpr.getArray(event));
+        Pattern pattern = PatternUtils.parseFrom(patternExpr.getArray(event));
         if (pattern == null) return;
-        Shapes.drawLine(pattern.pattern(), locationsExpr.getArray(event), rad, filled, async);
+        Shapes.drawLine(pattern, locationsExpr.getArray(event), rad, filled);
     }
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "" : "lazily ") + "draw a " + (filled ? "hollow " : "") + "line of " + patternExpr.toString(event, debug) + " between " + locationsExpr.toString(event, debug);
+        return (!isAsync() ? "lazily " : "") + "draw a " + (filled ? "hollow " : "") + "line of " + patternExpr.toString(event, debug) + " between " + locationsExpr.toString(event, debug);
     }
 }

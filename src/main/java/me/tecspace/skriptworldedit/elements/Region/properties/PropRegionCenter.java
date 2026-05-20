@@ -5,10 +5,12 @@ import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.math.Vector3;
 import com.sk89q.worldedit.regions.Region;
 import me.tecspace.skriptworldedit.api.RegionWrapper;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.registration.SyntaxRegistry;
@@ -58,11 +60,12 @@ public class PropRegionCenter extends PropertyExpression<RegionWrapper, Location
         for (RegionWrapper region : regions) {
             Region weRegion = region.region();
             Vector3 center = weRegion.getCenter();
+            World world = BukkitAdapter.adapt(region.world());
             if (isExact) {
                 // getCenter gets the center between the lesser corner of the greater block of the region so let's adjust for that
-                centres.add(new Location(region.world(), center.x() + 0.5, center.y() + 0.5, center.z() + 0.5));
+                centres.add(new Location(world, center.x() + 0.5, center.y() + 0.5, center.z() + 0.5));
             } else {
-                centres.add(new Location(region.world(), center.x(), center.y(), center.z()));
+                centres.add(new Location(world, center.x(), center.y(), center.z()));
             }
         }
         return centres.toArray(new Location[0]);

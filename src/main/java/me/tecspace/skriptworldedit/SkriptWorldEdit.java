@@ -72,7 +72,7 @@ public class SkriptWorldEdit extends JavaPlugin implements AddonModule {
         preLoadRelighterFactory();
 
         // Check for plugin updates from GitHub
-        new UpdateChecker(this, "tecspace", "SkriptWorldEdit").checkForUpdates();
+        new UpdateChecker(this, "sorya17", "SkriptWorldEdit").checkForUpdates();
 
         getLogger().info("SkriptWorldEdit has been enabled");
     }

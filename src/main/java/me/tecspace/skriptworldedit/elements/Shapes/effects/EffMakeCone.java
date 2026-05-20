@@ -1,11 +1,13 @@
 package me.tecspace.skriptworldedit.elements.Shapes.effects;
 
 import ch.njol.skript.doc.*;
-import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
-import me.tecspace.skriptworldedit.api.PatternWrapper;
+import com.sk89q.worldedit.function.pattern.Pattern;
+import me.tecspace.skriptworldedit.SkriptWorldEdit;
+import me.tecspace.skriptworldedit.api.lang.ConditionalAsyncEffect;
+import me.tecspace.skriptworldedit.api.utils.PatternUtils;
 import me.tecspace.skriptworldedit.api.Shapes;
 import org.bukkit.Location;
 import org.bukkit.event.Event;
@@ -21,18 +23,17 @@ import org.skriptlang.skript.registration.SyntaxRegistry;
         """)
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
-public class EffMakeCone extends Effect {
+public class EffMakeCone extends ConditionalAsyncEffect {
 
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffMakeCone.class)
                 .supplier(EffMakeCone::new)
-                .addPattern("[:lazily] make [a] [:hollow] cone (of|with|using) [pattern] " + PatternWrapper.PARSABLE_TYPES_STRING + " with [a] size [of] %vector%"
+                .addPattern("[:lazily] make [a] [:hollow] cone (of|with|using) [pattern] " + PatternUtils.PARSABLE_TYPES_STRING + " with [a] size [of] %vector%"
                         + "[(,| and) [a] thickness [of] %-number%]"
                         + " at %locations%")
                 .build());
     }
 
-    private boolean async;
     private boolean hollow;
     private Expression<?> patternExpr;
     private Expression<Vector> sizeExpr;
@@ -42,7 +43,7 @@ public class EffMakeCone extends Effect {
     @Override
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-        this.async = !parseResult.hasTag("lazily");
+        setAsync(!parseResult.hasTag("lazily") && SkriptWorldEdit.UsesFastAsyncWorldEdit);
         this.hollow = parseResult.hasTag("hollow");
         this.patternExpr = expressions[0];
         this.sizeExpr = (Expression<Vector>) expressions[1];
@@ -53,7 +54,7 @@ public class EffMakeCone extends Effect {
 
     @Override
     protected void execute(Event event) {
-        PatternWrapper pattern = PatternWrapper.from(patternExpr.getArray(event));
+        Pattern pattern = PatternUtils.parseFrom(patternExpr.getArray(event));
         if (pattern == null) return;
 
         Vector size = sizeExpr.getSingle(event);
@@ -67,12 +68,12 @@ public class EffMakeCone extends Effect {
         double thickness = (thicknessE != null) ? thicknessE.doubleValue() : 1.0;
 
         for (Location location : locationsExpr.getArray(event)) {
-            Shapes.makeCone(location, pattern.pattern(), lenX, lenZ, height, !hollow, thickness, async);
+            Shapes.makeCone(location, pattern, lenX, lenZ, height, !hollow, thickness);
         }
     }
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "" : "lazily ") + "make " + (hollow ? "hollow " : "") + "cone using " + patternExpr.toString(event, debug);
+        return (!isAsync() ? "lazily " : "") + "make " + (hollow ? "hollow " : "") + "cone using " + patternExpr.toString(event, debug);
     }
 }

@@ -5,7 +5,8 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
-import me.tecspace.skriptworldedit.api.MaskWrapper;
+import com.sk89q.worldedit.function.mask.Mask;
+import me.tecspace.skriptworldedit.api.utils.MaskUtils;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.registration.SyntaxInfo;
@@ -27,12 +28,12 @@ import org.skriptlang.skript.registration.SyntaxRegistry;
         """)
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
-public class ExprMask extends SimpleExpression<MaskWrapper> {
+public class ExprMask extends SimpleExpression<Mask> {
 
     public static void register(SyntaxRegistry registry) {
-        registry.register(SyntaxRegistry.EXPRESSION, SyntaxInfo.Expression.builder(ExprMask.class, MaskWrapper.class)
+        registry.register(SyntaxRegistry.EXPRESSION, SyntaxInfo.Expression.builder(ExprMask.class, Mask.class)
                 .supplier(ExprMask::new)
-                .addPattern("[a] mask (of|from|that matches) " + MaskWrapper.MASK_SOURCE_TYPES)
+                .addPattern("[a] mask (of|from|that matches) " + MaskUtils.MASK_SOURCE_TYPES)
                 .build());
     }
 
@@ -45,9 +46,9 @@ public class ExprMask extends SimpleExpression<MaskWrapper> {
     }
 
     @Override
-    protected MaskWrapper @Nullable [] get(Event event) {
-        MaskWrapper mask = MaskWrapper.from(source.getArray(event));
-        return new MaskWrapper[]{mask};
+    protected @Nullable Mask[] get(Event event) {
+        Mask mask = MaskUtils.parseFrom(source.getArray(event));
+        return new Mask[]{mask};
     }
 
     @Override
@@ -56,8 +57,8 @@ public class ExprMask extends SimpleExpression<MaskWrapper> {
     }
 
     @Override
-    public Class<? extends MaskWrapper> getReturnType() {
-        return MaskWrapper.class;
+    public Class<? extends Mask> getReturnType() {
+        return Mask.class;
     }
 
     @Override

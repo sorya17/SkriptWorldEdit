@@ -7,6 +7,7 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
 import com.sk89q.worldedit.math.BlockVector3;
 import me.tecspace.skriptworldedit.api.RegionWrapper;
+import me.tecspace.skriptworldedit.api.utils.Utils;
 import org.bukkit.event.Event;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
@@ -40,14 +41,15 @@ public class EffShift extends Effect {
 
     @Override
     protected void execute(Event event) {
-        RegionWrapper[] wrappers = regionExpr.getArray(event);
+        if (regionExpr == null || vectorExpr == null) return;
+
         Vector vector = vectorExpr.getSingle(event);
         if (vector == null) return;
 
-        BlockVector3 vector3 = BlockVector3.at(vector.getBlockX(), vector.getBlockY(), vector.getBlockZ());
+        BlockVector3 vector3 = Utils.toBlockVector3(vector);
 
-        for (RegionWrapper wrapper : wrappers) {
-            wrapper.region().shift(vector3);
+        for (RegionWrapper region : regionExpr.getArray(event)) {
+            region.region().shift(vector3);
         }
     }
 

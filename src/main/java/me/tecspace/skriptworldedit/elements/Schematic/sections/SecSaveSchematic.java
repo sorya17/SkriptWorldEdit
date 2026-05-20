@@ -2,7 +2,6 @@ package me.tecspace.skriptworldedit.elements.Schematic.sections;
 
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.doc.*;
-import ch.njol.skript.lang.EffectSection;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.TriggerItem;
@@ -11,8 +10,9 @@ import ch.njol.util.Kleenean;
 import com.sk89q.worldedit.extent.clipboard.io.BuiltInClipboardFormat;
 import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
 import com.sk89q.worldedit.function.mask.Mask;
-import me.tecspace.skriptworldedit.api.MaskWrapper;
+import me.tecspace.skriptworldedit.SkriptWorldEdit;
 import me.tecspace.skriptworldedit.api.RegionWrapper;
+import me.tecspace.skriptworldedit.api.lang.AsyncEffectSection;
 import me.tecspace.skriptworldedit.api.utils.SchematicUtils;
 import org.bukkit.Location;
 import org.bukkit.event.Event;
@@ -37,7 +37,7 @@ import java.util.List;
         - include biomes: (optional) whether biomes should be included. true by default.
         - overwrite existing: (optional) whether it should override the schematic if it already exists with that name/path. true by default.
         - origin: (optional) the location of which the schematic will be pasted around. region's lesser most corner by default.
-        - mask: (optional) a mask of blocks to NOT include in the schematic. none by default.
+        - mask: (optional) a mask of blocks to include. none by default.
         """)
 @Example("""
         save {_region} as a schematic named "example"
@@ -53,7 +53,7 @@ import java.util.List;
         """)
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
-public class SecSaveSchematic extends EffectSection {
+public class SecSaveSchematic extends AsyncEffectSection {
 
     private static EntryValidator VALIDATOR;
 
@@ -61,7 +61,7 @@ public class SecSaveSchematic extends EffectSection {
         VALIDATOR = buildValidator();
         registry.register(SyntaxRegistry.SECTION, SyntaxInfo.builder(SecSaveSchematic.class)
                 .supplier(SecSaveSchematic::new)
-                .addPattern("save %worldeditregions% as [a] (:schematic|structure) (:named|with path) %string%")
+                .addPattern("[:lazily] save %worldeditregions% as [a] (:schematic|structure) (:named|with path) %string%")
                 .build());
     }
 
@@ -72,20 +72,17 @@ public class SecSaveSchematic extends EffectSection {
         builder.addEntryData(new ExpressionEntryData<>("include biomes", new SimpleLiteral<>(true, true), true, Boolean.class));
         builder.addEntryData(new ExpressionEntryData<>("overwrite existing", new SimpleLiteral<>(true, true), true, Boolean.class));
         builder.addEntryData(new ExpressionEntryData<>("origin", null, true, Location.class));
-        builder.addEntryData(new ExpressionEntryData<>("mask", null, true, Object.class));
+        builder.addEntryData(new ExpressionEntryData<>("mask", null, true, Mask.class));
         return builder.build();
     }
 
     private Expression<RegionWrapper> regionsExpr;
-    private boolean asSchematic;
-    private boolean isPath;
+    private boolean asSchematic, isPath;
     private Expression<String> sourceExpr;
 
-    private @Nullable Expression<Boolean> includeEntities;
-    private @Nullable Expression<Boolean> includeBiomes;
-    private @Nullable Expression<Boolean> overwriteExisting;
+    private @Nullable Expression<Boolean> includeEntities, includeBiomes, overwriteExisting;
     private @Nullable Expression<Location> originExpr;
-    private @Nullable Expression<?> maskExpr;
+    private @Nullable Expression<Mask> maskExpr;
 
     @Override
     @SuppressWarnings("unchecked")
@@ -101,9 +98,10 @@ public class SecSaveSchematic extends EffectSection {
             this.includeBiomes = (Expression<Boolean>) container.getOptional("include biomes", true);
             this.overwriteExisting = (Expression<Boolean>) container.getOptional("overwrite existing", true);
             this.originExpr = (Expression<Location>) container.getOptional("origin", true);
-            this.maskExpr = (Expression<?>) container.getOptional("mask", true);
+            this.maskExpr = (Expression<Mask>) container.getOptional("mask", true);
         }
 
+        setAsync(!parseResult.hasTag("lazily") && SkriptWorldEdit.UsesFastAsyncWorldEdit);
         this.regionsExpr = (Expression<RegionWrapper>) expressions[0];
         this.asSchematic = parseResult.hasTag("schematic");
         this.isPath = !parseResult.hasTag("named");
@@ -112,13 +110,7 @@ public class SecSaveSchematic extends EffectSection {
         return true;
     }
 
-    @Override
-    protected @Nullable TriggerItem walk(Event event) {
-        execute(event);
-        return super.walk(event, false);
-    }
-
-    private void execute(Event event) {
+    protected void execute(Event event) {
         // effect entries
         String source = sourceExpr.getSingle(event);
         if (source == null) {
@@ -135,12 +127,11 @@ public class SecSaveSchematic extends EffectSection {
         boolean includeBiomes = this.includeBiomes == null || Boolean.TRUE.equals(this.includeBiomes.getSingle(event));
         boolean overwriteExisting = this.overwriteExisting == null || Boolean.TRUE.equals(this.overwriteExisting.getSingle(event));
 
-        if (overwriteExisting && savePath.toFile().exists()) return;
+        // dont overwrite file
+        if (!overwriteExisting && savePath.toFile().exists()) return;
 
-        MaskWrapper sourceMaskW = MaskWrapper.from(maskExpr == null ? null : maskExpr.getArray(event));
-        Mask sourceMask = (sourceMaskW == null) ? null : sourceMaskW.mask();
-
-        Location origin = (originExpr == null) ? null : originExpr.getSingle(event);
+        Mask mask = (maskExpr != null) ? maskExpr.getSingle(event) : null;
+        Location origin = (originExpr != null) ? originExpr.getSingle(event) : null;
 
         // get format
         ClipboardFormat format = (asSchematic) ? BuiltInClipboardFormat.SPONGE_V3_SCHEMATIC : BuiltInClipboardFormat.MINECRAFT_STRUCTURE;
@@ -152,7 +143,7 @@ public class SecSaveSchematic extends EffectSection {
                     includeEntities,
                     includeBiomes,
                     origin,
-                    sourceMask,
+                    mask,
                     null
             );
         }
@@ -160,8 +151,8 @@ public class SecSaveSchematic extends EffectSection {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return "save " + regionsExpr.toString(event, debug)
-                + ((asSchematic) ? "as a schematic " : "as a structure ")
+        return (!isAsync() ? "lazily " : "") + "save " + regionsExpr.toString(event, debug)
+                + ((asSchematic) ? " as a schematic " : " as a structure ")
                 + (isPath ? "with path " : "named ")
                 + sourceExpr.toString(event, debug);
     }

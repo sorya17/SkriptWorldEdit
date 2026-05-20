@@ -8,7 +8,6 @@ import ch.njol.util.Kleenean;
 import com.sk89q.worldedit.function.mask.Mask;
 import com.sk89q.worldedit.function.mask.MaskIntersection;
 import com.sk89q.worldedit.function.mask.MaskUnion;
-import me.tecspace.skriptworldedit.api.MaskWrapper;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.registration.SyntaxInfo;
@@ -31,37 +30,35 @@ import java.util.List;
         """)
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
-public class ExprCombineMasks extends SimpleExpression<MaskWrapper> {
+public class ExprCombineMasks extends SimpleExpression<Mask> {
 
     public static void register(SyntaxRegistry registry) {
-        registry.register(SyntaxRegistry.EXPRESSION, SyntaxInfo.Expression.builder(ExprCombineMasks.class, MaskWrapper.class)
+        registry.register(SyntaxRegistry.EXPRESSION, SyntaxInfo.Expression.builder(ExprCombineMasks.class, Mask.class)
                 .supplier(ExprCombineMasks::new)
                 .addPattern("[a] [combined] mask (that matches|matching) (:all|any) of %worldeditmasks%")
                 .build());
     }
 
     private boolean matchAll;
-    private Expression<MaskWrapper> wrapperSource;
+    private Expression<Mask> wrapperSource;
 
     @Override
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
         matchAll = parseResult.hasTag("all");
-        wrapperSource =  (Expression<MaskWrapper>) expressions[0];
+        wrapperSource =  (Expression<Mask>) expressions[0];
         return true;
     }
 
     @Override
-    protected MaskWrapper @Nullable [] get(Event event) {
+    protected Mask @Nullable [] get(Event event) {
         if (wrapperSource == null) return null;
-        MaskWrapper[] wrappers = wrapperSource.getArray(event);
+        Mask[] wrappers = wrapperSource.getArray(event);
         if (wrappers == null || wrappers.length == 0) return null;
 
         List<Mask> maskList = new ArrayList<>();
-        for (MaskWrapper wrapper : wrappers) {
-            if (wrapper != null && wrapper.mask() != null) {
-                maskList.add(wrapper.mask());
-            }
+        for (Mask mask : wrappers) {
+            if (mask != null) maskList.add(mask);
         }
 
         if (maskList.isEmpty()) return null;
@@ -73,7 +70,7 @@ public class ExprCombineMasks extends SimpleExpression<MaskWrapper> {
             combinedMask = new MaskUnion(maskList);
         }
 
-        return new MaskWrapper[]{new MaskWrapper(combinedMask)};
+        return new Mask[]{combinedMask};
     }
 
     @Override
@@ -82,8 +79,8 @@ public class ExprCombineMasks extends SimpleExpression<MaskWrapper> {
     }
 
     @Override
-    public Class<? extends MaskWrapper> getReturnType() {
-        return MaskWrapper.class;
+    public Class<? extends Mask> getReturnType() {
+        return Mask.class;
     }
 
     @Override

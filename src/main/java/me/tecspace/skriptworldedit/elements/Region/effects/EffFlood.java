@@ -1,13 +1,12 @@
 package me.tecspace.skriptworldedit.elements.Region.effects;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.doc.*;
-import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.util.Kleenean;
 import me.tecspace.skriptworldedit.SkriptWorldEdit;
 import me.tecspace.skriptworldedit.api.RegionWrapper;
+import me.tecspace.skriptworldedit.api.lang.ConditionalAsyncEffect;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.registration.SyntaxInfo;
@@ -17,10 +16,10 @@ import org.skriptlang.skript.registration.SyntaxRegistry;
 @Description("""
         Floods the region with water, while also waterlogging all compatible blocks.
         If you want to simply replace air with water you should use the replace effect instead.
-""")
+        """)
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
-public class EffFlood extends Effect {
+public class EffFlood extends ConditionalAsyncEffect {
 
     public static void register(SyntaxRegistry registry) {
         registry.register(SyntaxRegistry.EFFECT, SyntaxInfo.builder(EffFlood.class)
@@ -30,30 +29,27 @@ public class EffFlood extends Effect {
     }
 
     private Expression<RegionWrapper> regionExpr;
-    private boolean async;
 
     @Override
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
         regionExpr = (Expression<RegionWrapper>) exprs[0];
-        async = !parseResult.hasTag("lazily");
-        if (async && !SkriptWorldEdit.UsesFastAsyncWorldEdit) {
-            Skript.warning("Async is only supported with FastAsyncWorldEdit. The operation will run synchronously.");
-            async = false;
-        }
+        setAsync(!parseResult.hasTag("lazily") && SkriptWorldEdit.UsesFastAsyncWorldEdit);
         return true;
     }
 
     @Override
     protected void execute(Event event) {
+        if (regionExpr == null) return;
+
         for (RegionWrapper region : regionExpr.getAll(event)) {
-            region.flood(async);
+            region.flood();
         }
     }
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return (async ? "" : "lazily ") + "flood " + regionExpr.toString(event, debug);
+        return (!isAsync() ? "lazily " : "") + "flood " + regionExpr.toString(event, debug);
     }
 }
 

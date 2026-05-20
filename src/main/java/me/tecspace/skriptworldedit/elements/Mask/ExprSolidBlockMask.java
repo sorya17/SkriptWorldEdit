@@ -6,8 +6,8 @@ import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.util.Kleenean;
 import com.fastasyncworldedit.core.extent.NullExtent;
+import com.sk89q.worldedit.function.mask.Mask;
 import com.sk89q.worldedit.function.mask.SolidBlockMask;
-import me.tecspace.skriptworldedit.api.MaskWrapper;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 import org.skriptlang.skript.registration.SyntaxInfo;
@@ -17,10 +17,10 @@ import org.skriptlang.skript.registration.SyntaxRegistry;
 @Description("A simple mask that matches only solid blocks.")
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
-public class ExprSolidBlockMask extends SimpleExpression<MaskWrapper> {
+public class ExprSolidBlockMask extends SimpleExpression<Mask> {
 
     public static void register(SyntaxRegistry registry) {
-        registry.register(SyntaxRegistry.EXPRESSION, SyntaxInfo.Expression.builder(ExprSolidBlockMask.class, MaskWrapper.class)
+        registry.register(SyntaxRegistry.EXPRESSION, SyntaxInfo.Expression.builder(ExprSolidBlockMask.class, Mask.class)
                 .supplier(ExprSolidBlockMask::new)
                 .addPattern("[a] solid block mask")
                 .build());
@@ -32,9 +32,9 @@ public class ExprSolidBlockMask extends SimpleExpression<MaskWrapper> {
     }
 
     @Override
-    protected MaskWrapper @Nullable [] get(Event event) {
+    protected @Nullable Mask[] get(Event event) {
         SolidBlockMask mask = new SolidBlockMask(new NullExtent());
-        return new MaskWrapper[]{new MaskWrapper(mask)};
+        return new Mask[]{mask};
     }
 
     @Override
@@ -43,8 +43,8 @@ public class ExprSolidBlockMask extends SimpleExpression<MaskWrapper> {
     }
 
     @Override
-    public Class<? extends MaskWrapper> getReturnType() {
-        return MaskWrapper.class;
+    public Class<? extends Mask> getReturnType() {
+        return Mask.class;
     }
 
     @Override
