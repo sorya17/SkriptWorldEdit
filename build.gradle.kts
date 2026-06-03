@@ -23,6 +23,7 @@ dependencies {
     compileOnly("com.github.SkriptLang:Skript:2.15.0") {
         isTransitive = false
     }
+
     // WorldEdit
     //compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.4.0") {
     //    exclude(module = "bstats-bukkit")
@@ -41,11 +42,12 @@ tasks {
         minecraftVersion("1.21.11")
 
         downloadPlugins {
-            modrinth("Skript", "2.15.0")
+            modrinth("Skript", "2.15.3")
             //modrinth("worldedit", "CkT32vix")
             modrinth("FastAsyncWorldEdit", "2.15.0")
             github("SkriptLang", "skript-reflect", "v2.6.3", "skript-reflect-2.6.3.jar")
-            modrinth("skbee", "3.21.0")
+            modrinth("skbee", "3.24.0")
+            modrinth("viaversion", "5.9.1")
         }
     }
 }

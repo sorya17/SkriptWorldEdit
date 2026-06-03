@@ -1,7 +1,7 @@
-main: me.tecspace.skriptworldedit.SkriptWorldEdit
-name: SkriptWorldEdit
+main: me.tecspace.skworldedit.SkWorldEdit
+name: SkWorldEdit
 version: '${version}'
-description: "A Skript addon that lets you interact with WorldEdit."
+description: "A Skript addon letting you interact with WorldEdit"
 author: tecspace
 api-version: '${apiversion}'
 dependencies:
