@@ -48,14 +48,14 @@ import java.util.List;
 @Example("create line of stone between {_loc1} and {_loc2}")
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
-public class SecDrawLine extends TestAsyncEffect {
+public class SecCreateLine extends TestAsyncEffect {
 
     private static EntryValidator VALIDATOR;
 
     public static void register(SyntaxRegistry registry) {
         VALIDATOR = buildValidator();
-        registry.register(SyntaxRegistry.SECTION, SyntaxInfo.builder(SecDrawLine.class)
-                .supplier(SecDrawLine::new)
+        registry.register(SyntaxRegistry.SECTION, SyntaxInfo.builder(SecCreateLine.class)
+                .supplier(SecCreateLine::new)
                 .addPattern("[:lazily] create [a] (line|spline) [out] of " + PatternUtils.PARSABLE_TYPES_STRING + " between %locations% [:and wait]")
                 .build());
     }
@@ -139,6 +139,7 @@ public class SecDrawLine extends TestAsyncEffect {
         }
 
         World world = locations[0].getWorld();
+        // This probably can't happen anyway, but is here because I'm not sure
         if (world == null) {
             error("A world is needed for this operation, but no world was found. Make sure the first location includes a world.");
             return null;
@@ -151,15 +152,15 @@ public class SecDrawLine extends TestAsyncEffect {
         }
 
         // section entries
-        double thickness = ExprUtils.getSingle(thicknessExpr, event, 0);
-        boolean hollow = ExprUtils.getSingle(hollowExpr, event, false);
-        Mask mask = ExprUtils.getSingle(maskExpr, event);
+        double thickness = ExprUtils.getSingle(event, thicknessExpr, 0);
+        boolean hollow = ExprUtils.getSingle(event, hollowExpr, false);
+        Mask mask = ExprUtils.getSingle(event, maskExpr);
 
         // section spline entries
-        double tension = ExprUtils.getSingle(tensionExpr, event, 0);
-        double bias = ExprUtils.getSingle(biasExpr, event, 0);
-        double continuity = ExprUtils.getSingle(continuityExpr, event, 0);
-        double quality = ExprUtils.getSingle(qualityExpr, event, 10);
+        double tension = ExprUtils.getSingle(event, tensionExpr, 0);
+        double bias = ExprUtils.getSingle(event, biasExpr, 0);
+        double continuity = ExprUtils.getSingle(event, continuityExpr, 0);
+        double quality = ExprUtils.getSingle(event, qualityExpr, 10);
 
         return () -> {
             try (EditSession session = WorldEdit.getInstance().newEditSession(BukkitAdapter.adapt(world))) {

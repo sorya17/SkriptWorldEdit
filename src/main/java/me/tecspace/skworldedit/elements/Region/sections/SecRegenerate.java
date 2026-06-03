@@ -1,19 +1,23 @@
 package me.tecspace.skworldedit.elements.Region.sections;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.doc.*;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.TriggerItem;
-import ch.njol.skript.lang.util.SimpleLiteral;
 import ch.njol.util.Kleenean;
+import com.sk89q.worldedit.EditSession;
+import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.function.mask.Mask;
 import com.sk89q.worldedit.world.RegenOptions;
+import com.sk89q.worldedit.world.World;
 import com.sk89q.worldedit.world.biome.BiomeType;
 import me.tecspace.skworldedit.SkWorldEdit;
 import me.tecspace.skworldedit.api.RegionWrapper;
-import me.tecspace.skworldedit.api.lang.AsyncEffectSection;
+import me.tecspace.skworldedit.api.lang.TestAsyncEffect;
+import me.tecspace.skworldedit.api.utils.ExprUtils;
 import org.bukkit.block.Biome;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
@@ -29,11 +33,14 @@ import java.util.List;
 @Description("""
         This will regenerate the region just like the //regen command. Be aware that this can take some time, since it's generating chunks.
         
-        Entries:
-        - seed: (optional) the seed to use. Uses the world's seed by default.
-        - biome: (optional) which biome should be generated.
-        - include biomes: (optional) whether biomes should be applied. false by default.
-        - mask: (optional) a mask to restrict which blocks in the region are affected.
+        Optional Section Entries:
+        - seed: (Number) the seed to use. Uses the world's seed by default.
+        - biome: (Biome) which biome should be generated.
+        - include biomes: (Boolean) whether biomes should be applied. false by default.
+        - mask: (Mask) a mask to restrict which blocks in the region are affected.
+
+        [lazily]: Makes it NOT run async. Requires FAWE (without it, it will never run async anyway).
+        [and wait]: Acts just like a delay (when FAWE is used and not 'lazily'), making the effect wait until it finishes before continuing the script.
         """)
 @Examples("""
         regenerate {_region}:
@@ -44,15 +51,15 @@ import java.util.List;
         """)
 @RequiredPlugins("WorldEdit")
 @Since("1.0")
-public class EffSecRegenerate extends AsyncEffectSection {
+public class SecRegenerate extends TestAsyncEffect {
 
     private static EntryValidator VALIDATOR;
 
     public static void register(SyntaxRegistry registry) {
         VALIDATOR = buildValidator();
-        registry.register(SyntaxRegistry.SECTION, SyntaxInfo.builder(EffSecRegenerate.class)
-                .supplier(EffSecRegenerate::new)
-                .addPattern("regenerate [the] [region] %worldeditregions%")
+        registry.register(SyntaxRegistry.SECTION, SyntaxInfo.builder(SecRegenerate.class)
+                .supplier(SecRegenerate::new)
+                .addPattern("[:lazily] regen[erate] [the] [region] %worldeditregions% [:and wait]")
                 .build());
     }
 
@@ -60,7 +67,7 @@ public class EffSecRegenerate extends AsyncEffectSection {
         EntryValidator.EntryValidatorBuilder builder = EntryValidator.builder();
         builder.addEntryData(new ExpressionEntryData<>("seed", null, true, Long.class));
         builder.addEntryData(new ExpressionEntryData<>("biome", null, true, Biome.class));
-        builder.addEntryData(new ExpressionEntryData<>("include biomes", new SimpleLiteral<>(false, true), true, Boolean.class));
+        builder.addEntryData(new ExpressionEntryData<>("include biomes", null, true, Boolean.class));
         builder.addEntryData(new ExpressionEntryData<>("mask", null, true, Mask.class));
         return builder.build();
     }
@@ -75,6 +82,23 @@ public class EffSecRegenerate extends AsyncEffectSection {
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult, @Nullable SectionNode sectionNode, @Nullable List<TriggerItem> triggerItems) {
 
+        boolean lazily = parseResult.hasTag("lazily");
+        boolean delayed = parseResult.hasTag("and wait");
+
+        if (!SkWorldEdit.UsesFastAsyncWorldEdit) {
+            if (lazily) Skript.warning("'lazily' has no effect because FAWE is not installed. The effect will run lazily anyway.");
+            if (delayed) Skript.warning("'and wait' has no effect because FAWE is not installed. The effect can't have any delay.");
+        }
+
+        if (lazily && delayed) {
+            Skript.warning("'and wait' has no effect when 'lazily' is used. you should remove it.");
+        }
+
+        setAsync(!lazily && SkWorldEdit.UsesFastAsyncWorldEdit);
+        setDelayed(delayed && SkWorldEdit.UsesFastAsyncWorldEdit);
+
+        this.regionsExpr = (Expression<RegionWrapper>) expressions[0];
+
         // section entries
         if (hasSection()) {
             if (sectionNode == null || sectionNode.isEmpty()) return false;
@@ -86,22 +110,22 @@ public class EffSecRegenerate extends AsyncEffectSection {
             this.includeBiomes = (Expression<Boolean>) container.getOptional("include biomes", true);
             this.maskExpr = (Expression<Mask>) container.getOptional("mask", true);
         }
-
-        setAsync(SkWorldEdit.UsesFastAsyncWorldEdit);
-        this.regionsExpr = (Expression<RegionWrapper>) expressions[0];
-
         return true;
     }
 
     @Override
-    protected void execute(Event event) {
-        if (regionsExpr == null) return;
+    protected @Nullable Runnable execute(Event event) {
+
+        if (regionsExpr == null) {
+            error("No region to regenerate was given.");
+            return null;
+        }
 
         // section entries
-        Long seed = (seedExpr != null) ? seedExpr.getSingle(event) : null;
-        Biome biome = (biomeExpr != null) ? biomeExpr.getSingle(event) : null;
-        boolean includeBiomes = this.includeBiomes != null && Boolean.TRUE.equals(this.includeBiomes.getSingle(event));
-        Mask mask = (maskExpr != null) ? maskExpr.getSingle(event) : null;
+        Long seed = ExprUtils.getSingle(event, seedExpr);
+        Biome biome = ExprUtils.getSingle(event, biomeExpr);
+        boolean includeBiomes = ExprUtils.getSingle(event, this.includeBiomes, false);
+        Mask mask = ExprUtils.getSingle(event, maskExpr);
 
         BiomeType biomeType = (biome != null) ? BukkitAdapter.adapt(biome) : null;
 
@@ -111,13 +135,23 @@ public class EffSecRegenerate extends AsyncEffectSection {
                 .regenBiomes(includeBiomes)
                 .build();
 
-        for (RegionWrapper region : regionsExpr.getAll(event)) {
-            region.regenerate(options, mask);
-        }
+        return () -> {
+            // some regions can be in different worlds, thus it cant have the same session
+            for (RegionWrapper region : regionsExpr.getAll(event)) {
+                World world = region.world();
+                try (EditSession session = WorldEdit.getInstance().newEditSession(world)) {
+
+                    if (mask != null) session.setMask(mask);
+                    // session.regenerate seems to be broken
+                    //region.regenerate(options, mask); // this still needs testing
+                    world.regenerate(region.region(), session, options);
+                }
+            }
+        };
     }
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return "regenerate " + regionsExpr.toString(event, debug);
+        return "regenerate the region " + regionsExpr.toString(event, debug);
     }
 }
