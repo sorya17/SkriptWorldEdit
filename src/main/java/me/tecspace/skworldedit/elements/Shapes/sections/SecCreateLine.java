@@ -1,6 +1,5 @@
 package me.tecspace.skworldedit.elements.Shapes.sections;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.doc.*;
 import ch.njol.skript.lang.Expression;
@@ -33,17 +32,17 @@ import java.util.List;
 @Description("""
         Creates a line (out of blocks) between two or more locations, in the order given.
         
-        **Optional Section Entries:**
-        - thickness: (Number) The radius (thickness) of the line.
-        - hollow: (Boolean) If true, only a shell will be generated.
-        - mask: (Mask) A mask to respect (:
-        - tension: (Number) The tension of every node. default 0.
-        - bias: (Number) The bias of every node. default 0.
-        - continuity: (Number) The continuity of every node. default 0.
-        - quality: (Number) The quality of the spline. Must be greater than 0. default 10.
+        Optional Section Entries:
+        - thickness: (number) The radius (thickness) of the line.
+        - hollow: (boolean) If true, only a shell will be generated.
+        - mask: (mask) A mask to respect (:
+        - tension: (number) The tension of every node. default 0.
+        - bias: (number) The bias of every node. default 0.
+        - continuity: (number) The continuity of every node. default 0.
+        - quality: (number) The quality of the spline. Must be greater than 0. default 10.
         
-        [lazily]: Makes it NOT run async. Requires FAWE (without it, it will never run async anyway).
-        [and wait]: Acts just like a delay (when FAWE is used and not 'lazily'), making the effect wait until it finishes before continuing the script.
+        lazily: Forces synchronous execution (requires fawe).
+        and wait: Pauses the skript until the operation finishes. No effect without fawe or alongside 'lazily'.
         """)
 @Example("create line of stone between {_loc1} and {_loc2}")
 @RequiredPlugins("WorldEdit")
@@ -87,22 +86,10 @@ public class SecCreateLine extends TestAsyncEffect {
 
     @Override
     @SuppressWarnings("unchecked")
-    public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult, SectionNode sectionNode, List<TriggerItem> triggerItems) {
+    protected boolean load(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult, SectionNode sectionNode, List<TriggerItem> triggerItems) {
 
-        boolean lazily = parseResult.hasTag("lazily");
-        boolean delayed = parseResult.hasTag("and wait");
-
-        if (!SkWorldEdit.UsesFastAsyncWorldEdit) {
-            if (lazily) Skript.warning("'lazily' has no effect because FAWE is not installed. The effect will run lazily anyway.");
-            if (delayed) Skript.warning("'and wait' has no effect because FAWE is not installed. The effect can't have any delay.");
-        }
-
-        if (lazily && delayed) {
-            Skript.warning("'and wait' has no effect when 'lazily' is used. you should remove it.");
-        }
-
-        setAsync(!lazily && SkWorldEdit.UsesFastAsyncWorldEdit);
-        setDelayed(delayed && SkWorldEdit.UsesFastAsyncWorldEdit);
+        setAsync(!parseResult.hasTag("lazily") && SkWorldEdit.UsesFastAsyncWorldEdit);
+        setDelayed(parseResult.hasTag("and wait") && SkWorldEdit.UsesFastAsyncWorldEdit);
 
         this.patternExpr = expressions[0];
         this.locationsExpr = (Expression<Location>) expressions[1];
@@ -176,9 +163,6 @@ public class SecCreateLine extends TestAsyncEffect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return String.format("%screate line of %s between %s",
-                (isAsync() ? "" : "lazily "),
-                patternExpr.toString(event, debug),
-                locationsExpr.toString(event, debug));
+        return (isAsync() ? "" : "lazily ") + "create line of " + patternExpr.toString(event, debug) + " at " + locationsExpr.toString(event, debug) + (isDelayed() ? " and wait" : "");
     }
 }

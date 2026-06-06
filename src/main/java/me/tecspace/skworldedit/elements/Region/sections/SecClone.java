@@ -1,6 +1,5 @@
 package me.tecspace.skworldedit.elements.Region.sections;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.doc.*;
 import ch.njol.skript.lang.*;
@@ -37,17 +36,17 @@ import java.util.List;
         Copies the contents of a region to another location directly.
         
         Optional Section Entries:
-        - copy entities: (Boolean) whether entities should be included. false by default.
-        - copy biomes: (Boolean) whether biomes should be included. false by default.
-        - mask: (Mask) a mask of blocks to only change when placing.
-        - source mask: (Mask) a mask of blocks to only copy from the region.
-        - rotation: (Number) the rotation across the y-axis at which the build is copied. 0 by default.
-        - scale: (Number) lets you define how the build should be scaled. none by default.
-        - offset: (Vector) letting you offset the build placement. none by default.
-        - center: (Location) the source position from where the region is copied. region's min corner by default.
+        - copy entities: (boolean) whether entities should be included. false by default.
+        - copy biomes: (boolean) whether biomes should be included. false by default.
+        - mask: (mask) a mask of blocks to only change when placing.
+        - source mask: (mask) a mask of blocks to only copy from the region.
+        - rotation: (number) the rotation across the y-axis at which the build is copied. 0 by default.
+        - scale: (number) lets you define how the build should be scaled. none by default.
+        - offset: (vector) letting you offset the build placement. none by default.
+        - center: (location) the source position from where the region is copied. region's min corner by default.
         
-        [lazily]: Makes it NOT run async. Requires FAWE (without it, it will never run async anyway).
-        [and wait]: Acts just like a delay (when FAWE is used and not 'lazily'), making the effect wait until it finishes before continuing the script.
+        lazily: Forces synchronous execution (requires fawe).
+        and wait: Pauses the skript until the operation finishes. No effect without fawe or alongside 'lazily'.
         """)
 @Examples("""
         clone {_region} to location(187,67,420):
@@ -101,22 +100,10 @@ public class SecClone extends TestAsyncEffect {
 
     @Override
     @SuppressWarnings("unchecked")
-    public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult, @Nullable SectionNode sectionNode, @Nullable List<TriggerItem> triggerItems) {
+    protected boolean load(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult, SectionNode sectionNode, List<TriggerItem> triggerItems) {
 
-        boolean lazily = parseResult.hasTag("lazily");
-        boolean delayed = parseResult.hasTag("and wait");
-
-        if (!SkWorldEdit.UsesFastAsyncWorldEdit) {
-            if (lazily) Skript.warning("'lazily' has no effect because FAWE is not installed. The effect will run lazily anyway.");
-            if (delayed) Skript.warning("'and wait' has no effect because FAWE is not installed. The effect can't have any delay.");
-        }
-
-        if (lazily && delayed) {
-            Skript.warning("'and wait' has no effect when 'lazily' is used. you should remove it.");
-        }
-
-        setAsync(!lazily && SkWorldEdit.UsesFastAsyncWorldEdit);
-        setDelayed(delayed && SkWorldEdit.UsesFastAsyncWorldEdit);
+        setAsync(!parseResult.hasTag("lazily") && SkWorldEdit.UsesFastAsyncWorldEdit);
+        setDelayed(parseResult.hasTag("and wait") && SkWorldEdit.UsesFastAsyncWorldEdit);
 
         this.regionsExpr = (Expression<RegionWrapper>) expressions[0];
         this.locationsExpr = (Expression<Location>) expressions[1];
@@ -195,9 +182,6 @@ public class SecClone extends TestAsyncEffect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return String.format("%sclone region %s to %s",
-                (isAsync() ? "" : "lazily "),
-                regionsExpr.toString(event, debug),
-                locationsExpr.toString(event, debug));
+        return (isAsync() ? "" : "lazily ") + "clone region " + regionsExpr.toString(event, debug) + " to " + locationsExpr.toString(event, debug) + (isDelayed() ? " and wait" : "");
     }
 }

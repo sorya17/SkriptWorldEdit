@@ -1,6 +1,5 @@
 package me.tecspace.skworldedit.elements.Region.sections;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.config.SectionNode;
 import ch.njol.skript.doc.*;
 import ch.njol.skript.lang.Expression;
@@ -34,13 +33,13 @@ import java.util.List;
         This will regenerate the region just like the //regen command. Be aware that this can take some time, since it's generating chunks.
         
         Optional Section Entries:
-        - seed: (Number) the seed to use. Uses the world's seed by default.
-        - biome: (Biome) which biome should be generated.
-        - include biomes: (Boolean) whether biomes should be applied. false by default.
-        - mask: (Mask) a mask to restrict which blocks in the region are affected.
+        - seed: (number) the seed to use. Uses the world's seed by default.
+        - biome: (biome) which biome should be generated.
+        - include biomes: (boolean) whether biomes should be applied. false by default.
+        - mask: (mask) a mask to restrict which blocks in the region are affected.
 
-        [lazily]: Makes it NOT run async. Requires FAWE (without it, it will never run async anyway).
-        [and wait]: Acts just like a delay (when FAWE is used and not 'lazily'), making the effect wait until it finishes before continuing the script.
+        lazily: Forces synchronous execution (requires fawe).
+        and wait: Pauses the skript until the operation finishes. No effect without fawe or alongside 'lazily'.
         """)
 @Examples("""
         regenerate {_region}:
@@ -80,22 +79,10 @@ public class SecRegenerate extends TestAsyncEffect {
 
     @Override
     @SuppressWarnings("unchecked")
-    public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult, @Nullable SectionNode sectionNode, @Nullable List<TriggerItem> triggerItems) {
+    protected boolean load(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult, SectionNode sectionNode, List<TriggerItem> triggerItems) {
 
-        boolean lazily = parseResult.hasTag("lazily");
-        boolean delayed = parseResult.hasTag("and wait");
-
-        if (!SkWorldEdit.UsesFastAsyncWorldEdit) {
-            if (lazily) Skript.warning("'lazily' has no effect because FAWE is not installed. The effect will run lazily anyway.");
-            if (delayed) Skript.warning("'and wait' has no effect because FAWE is not installed. The effect can't have any delay.");
-        }
-
-        if (lazily && delayed) {
-            Skript.warning("'and wait' has no effect when 'lazily' is used. you should remove it.");
-        }
-
-        setAsync(!lazily && SkWorldEdit.UsesFastAsyncWorldEdit);
-        setDelayed(delayed && SkWorldEdit.UsesFastAsyncWorldEdit);
+        setAsync(!parseResult.hasTag("lazily") && SkWorldEdit.UsesFastAsyncWorldEdit);
+        setDelayed(parseResult.hasTag("and wait") && SkWorldEdit.UsesFastAsyncWorldEdit);
 
         this.regionsExpr = (Expression<RegionWrapper>) expressions[0];
 
@@ -116,7 +103,8 @@ public class SecRegenerate extends TestAsyncEffect {
     @Override
     protected @Nullable Runnable execute(Event event) {
 
-        if (regionsExpr == null) {
+        RegionWrapper[] regions = regionsExpr.getAll(event);
+        if (regions == null || regions.length == 0) {
             error("No region to regenerate was given.");
             return null;
         }
@@ -137,7 +125,7 @@ public class SecRegenerate extends TestAsyncEffect {
 
         return () -> {
             // some regions can be in different worlds, thus it cant have the same session
-            for (RegionWrapper region : regionsExpr.getAll(event)) {
+            for (RegionWrapper region : regions) {
                 World world = region.world();
                 try (EditSession session = WorldEdit.getInstance().newEditSession(world)) {
 
@@ -152,6 +140,6 @@ public class SecRegenerate extends TestAsyncEffect {
 
     @Override
     public String toString(@Nullable Event event, boolean debug) {
-        return "regenerate the region " + regionsExpr.toString(event, debug);
+        return (isAsync() ? "" : "lazily ") + "regenerate the region " + regionsExpr.toString(event, debug) + (isDelayed() ? " and wait" : "");
     }
 }

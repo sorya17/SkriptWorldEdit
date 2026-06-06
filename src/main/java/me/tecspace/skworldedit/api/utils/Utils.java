@@ -4,6 +4,7 @@ import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.log.ErrorQuality;
 import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.math.Vector3;
 import me.tecspace.skworldedit.SkWorldEdit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -37,6 +38,13 @@ public final class Utils {
                     PLUGIN_PREFIX.append(MINIMESSAGE.deserialize(line))
             );
         }
+    }
+
+    /**
+     * Converts a {@link Vector} to a {@link Vector3}
+     */
+    public static Vector3 toVector3(Vector vec) {
+        return Vector3.at(vec.getX(), vec.getY(), vec.getZ());
     }
 
     /**

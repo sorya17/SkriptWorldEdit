@@ -1,27 +1,21 @@
 package me.tecspace.skworldedit.api.lang;
 
 import ch.njol.skript.Skript;
-import ch.njol.skript.config.SectionNode;
-import ch.njol.skript.lang.EffectSection;
-import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.SkriptParser;
-import ch.njol.skript.lang.TriggerItem;
+import ch.njol.skript.lang.*;
 import ch.njol.util.Kleenean;
 import me.tecspace.skworldedit.SkWorldEdit;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /**
- * Implementation of {@link EffectSection}.
- * you may use {@link #setAsync(boolean)} and {@link #setDelayed(boolean)} in {@code init}.
+ * Implementation of {@link Effect}.
+ * you may use {@link #setAsync(boolean)} and {@link #setDelayed(boolean)} in {@code load}.
  * <p>
- * Skript code should be run before the lambda returned by {@code execute}.
+ * Skript code should be run before the lambda returned by {@code runnable}.
  * Majority of Minecraft APIs are not thread-safe, so be careful.
  */
-public abstract class TestAsyncEffect extends EffectSection {
+public abstract class CondAsyncEffect extends Effect {
 
     private boolean async = false;
     private boolean delayed = false;
@@ -29,7 +23,11 @@ public abstract class TestAsyncEffect extends EffectSection {
     /**
      * @return Code to be run. null to skip execution entirely.
      */
-    protected abstract @Nullable Runnable execute(Event event);
+    protected abstract @Nullable Runnable runnable(Event event);
+
+    @Override protected void execute(Event event) {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Whether it should run asynchronously
@@ -56,16 +54,16 @@ public abstract class TestAsyncEffect extends EffectSection {
 
     @Override
     protected @Nullable TriggerItem walk(Event event) {
-        Runnable operation = execute(event);
+        Runnable operation = runnable(event);
         if (operation == null) return getNext(); // skip and go to next skript item
         if (!isAsync()) {
             operation.run();
-            return super.walk(event, false);
+            return getNext();
         } else {
             if (!isDelayed()) {
                 // run async and restart skript immediately
                 Bukkit.getScheduler().runTaskAsynchronously(Skript.getInstance(), operation);
-                return super.walk(event, false);
+                return getNext();
             } else {
                 // run async and restart skript afterwards
                 DelayedAsyncTrigger.execute(event, this, operation);
@@ -77,12 +75,12 @@ public abstract class TestAsyncEffect extends EffectSection {
     /**
      * Override init so we can add checks here
      */
-    protected abstract boolean load(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult, SectionNode sectionNode, List<TriggerItem> triggerItems);
+    protected abstract boolean load(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult);
 
     @Override
-    public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult, SectionNode sectionNode, List<TriggerItem> triggerItems) {
+    public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
         if (!earlyInit()) return false;
-        if (!load(expressions, matchedPattern, isDelayed, parseResult, sectionNode, triggerItems)) return false;
+        if (!load(exprs, matchedPattern, isDelayed, parseResult)) return false;
         return finalInit();
     }
 
